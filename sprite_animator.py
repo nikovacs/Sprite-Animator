@@ -1,5 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from ui import Ui_MainWindow
+from new_sprite_ui import Ui_Dialog as NewSpriteDialog
+from animation import Animation
 import sys
 
 class Animator_GUI(Ui_MainWindow):
@@ -7,10 +9,65 @@ class Animator_GUI(Ui_MainWindow):
         super().__init__()
         super().setupUi(MainWindow)
 
+        self.curr_dir = self.dir_combo_box.currentText()
+        self.curr_animation = None
+
         #link bg_color_btn to change_background_color method
         self.bg_color_btn.clicked.connect(self.change_background_color)
 
-    def change_background_color(self):
+        # link self.plus_sprite_btn to add_new_sprite method
+        self.plus_sprite_btn.clicked.connect(self.add_new_sprite)
+
+        # link dir_combo_box to change_dir method
+        self.dir_combo_box.currentIndexChanged.connect(self.change_dir)
+
+        # link new_btn to new_animation method
+        self.new_btn.clicked.connect(self.new_animation)
+
+        # link save_btn to save_animation method
+        self.save_btn.clicked.connect(self.save_animation)
+
+        # link saveas_btn to save_animation_as method
+        self.saveas_btn.clicked.connect(self.save_animation_as)
+
+        # link reverse_btn to reverse_frames method
+        self.reverse_btn.clicked.connect(self.reverse_frames)
+
+        # link new_btn to new_animation method
+        self.new_btn.clicked.connect(self.new_animation)
+
+
+    def new_animation(self) -> None:
+        self.curr_animation = Animation()
+
+    def reverse_frames(self) -> None:
+        pass
+
+    def save_animation_as(self) -> None:
+        pass
+
+    def save_animation(self) -> None:
+        pass
+
+    def new_animation(self) -> None:
+        pass
+
+    def change_dir(self) -> None:
+        self.curr_dir = self.dir_combo_box.currentText()
+    
+    def add_new_sprite(self) -> None:
+        """
+        Creates a new window that allows the user to create a new sprite
+        """
+        new_sprite_window = QtWidgets.QDialog()
+        new_sprite_ui = NewSpriteDialog()
+        new_sprite_ui.setupUi(new_sprite_window)
+        new_sprite_window.exec_()
+
+        # link add_sprite_btn to add_sprite_to_current_frame method
+        #TODO:
+
+    def change_background_color(self) -> None:
         """
         Changes the background color of the window
         """

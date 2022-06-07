@@ -3,12 +3,19 @@ from sprite import Sprite
 class Frame:
     def __init__(self) -> None:
         self.frame_parts = {
-            "left": FramePart(),
-            "right": FramePart(),
-            "up": FramePart(),
-            "down": FramePart(),
+            "left": [FramePart()],
+            "right": [FramePart()],
+            "up": [FramePart()],
+            "down": [FramePart()],
         }
         self.length = 0.05
+    
+    def reverse(self) -> None:
+        """
+        Reverses the order of the sprites in the frame
+        """
+        for key, values in self.frame_parts.items():
+            self.frame_parts[key] = values[::-1]
 
 
 class FramePart:

@@ -434,14 +434,12 @@
                 <item row="0" column="1">
                  <widget class="QLineEdit" name="def_head_textbox"/>
                 </item>
-                <item row="4" column="1">
-                 <widget class="QLineEdit" name="def_attr3_textbox"/>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QLineEdit" name="def_body_textbox"/>
-                </item>
-                <item row="3" column="1">
-                 <widget class="QLineEdit" name="def_attr2_textbox"/>
+                <item row="3" column="0">
+                 <widget class="QLabel" name="label_10">
+                  <property name="text">
+                   <string>Def. attr2</string>
+                  </property>
+                 </widget>
                 </item>
                 <item row="0" column="0">
                  <widget class="QLabel" name="label_7">
@@ -449,6 +447,18 @@
                    <string>Def. Head</string>
                   </property>
                  </widget>
+                </item>
+                <item row="7" column="1">
+                 <widget class="QLineEdit" name="param2_textbox"/>
+                </item>
+                <item row="6" column="1">
+                 <widget class="QLineEdit" name="param1_textbox"/>
+                </item>
+                <item row="4" column="1">
+                 <widget class="QLineEdit" name="def_attr3_textbox"/>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QLineEdit" name="def_body_textbox"/>
                 </item>
                 <item row="1" column="0">
                  <widget class="QLabel" name="label_8">
@@ -464,13 +474,6 @@
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="0">
-                 <widget class="QLabel" name="label_10">
-                  <property name="text">
-                   <string>Def. attr2</string>
-                  </property>
-                 </widget>
-                </item>
                 <item row="4" column="0">
                  <widget class="QLabel" name="label_11">
                   <property name="text">
@@ -478,10 +481,37 @@
                   </property>
                  </widget>
                 </item>
+                <item row="3" column="1">
+                 <widget class="QLineEdit" name="def_attr2_textbox"/>
+                </item>
                 <item row="5" column="0">
                  <widget class="QLabel" name="label_12">
                   <property name="text">
                    <string>Def. ATTR12</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="8" column="1">
+                 <widget class="QLineEdit" name="param3_textbox"/>
+                </item>
+                <item row="6" column="0">
+                 <widget class="QLabel" name="label_14">
+                  <property name="text">
+                   <string>Def. param1</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="7" column="0">
+                 <widget class="QLabel" name="label_16">
+                  <property name="text">
+                   <string>Def. param2</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="8" column="0">
+                 <widget class="QLabel" name="label_17">
+                  <property name="text">
+                   <string>Def. param3</string>
                   </property>
                  </widget>
                 </item>
