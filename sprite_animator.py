@@ -3,6 +3,7 @@ from ui import Ui_MainWindow
 from new_sprite_ui import Ui_Dialog as NewSpriteDialog
 from animation import Animation
 import sys
+import os
 
 class Animator_GUI(Ui_MainWindow):
     def __init__(self, MainWindow) -> None:
@@ -33,12 +34,18 @@ class Animator_GUI(Ui_MainWindow):
         # link reverse_btn to reverse_frames method
         self.reverse_btn.clicked.connect(self.reverse_frames)
 
-        # link new_btn to new_animation method
-        self.new_btn.clicked.connect(self.new_animation)
+        # link open_btn to new_animation method
+        self.open_btn.clicked.connect(lambda: self.new_animation(from_file=True))
 
 
-    def new_animation(self) -> None:
-        self.curr_animation = Animation()
+    def new_animation(self, from_file=False) -> None:
+        if from_file:
+            # display a QFileDialog to get the file name
+            file = self.__get_gani_file()
+            if file.endswith(".gani"):
+                self.curr_animation = Animation(from_file=file)
+        else:
+            self.curr_animation = Animation()
 
     def reverse_frames(self) -> None:
         pass
@@ -47,9 +54,6 @@ class Animator_GUI(Ui_MainWindow):
         pass
 
     def save_animation(self) -> None:
-        pass
-
-    def new_animation(self) -> None:
         pass
 
     def change_dir(self) -> None:
@@ -74,6 +78,13 @@ class Animator_GUI(Ui_MainWindow):
         color = QtWidgets.QColorDialog.getColor()
         if color.isValid():
             MainWindow.setStyleSheet(f"background-color: {color.name()}")
+
+    def __get_gani_file(self):
+        """
+        Displays a QFileDialog to get a gani file
+        """
+        file = QtWidgets.QFileDialog.getOpenFileName(None, "Open Gani File", os.path.normpath('E:\Downloads\ganis\ganis'), "Gani Files (*.gani)")
+        return file[0]
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])

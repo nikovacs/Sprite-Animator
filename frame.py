@@ -1,14 +1,25 @@
 from sprite import Sprite
 
 class Frame:
-    def __init__(self) -> None:
-        self.frame_parts = {
-            "left": [FramePart()],
-            "right": [FramePart()],
-            "up": [FramePart()],
-            "down": [FramePart()],
-        }
-        self.length = 0.05
+    def __init__(self, frame=None) -> None:
+        """
+        A frame can be instantiated as an empty frame or from another frame
+        """
+        if not frame:
+            self.frame_parts = {
+                "up": FramePart(),
+                "left": FramePart(),
+                "down": FramePart(),
+                "right": FramePart(),
+            }
+            self.length = 0.05
+            self.sfx_file = ""
+            self.wait = 0
+        else:
+            self.frame_parts = {k:FramePart(v) for k,v in frame.frame_parts.items()}
+            self.length = frame.length
+            self.sfx_file = frame.sfx_file
+            self.wait = frame.wait
     
     def reverse(self) -> None:
         """
@@ -16,6 +27,20 @@ class Frame:
         """
         for key, values in self.frame_parts.items():
             self.frame_parts[key] = values[::-1]
+    
+    def set_sfx(self, file: str) -> None:
+        self.sfx_file = file
+
+    def set_wait(self, wait: int) -> None:
+        self.wait = wait
+    
+    def get_frame_part(self, dir: str) -> "FramePart":
+        """
+        Returns the frame part for the given direction
+        
+        @param dir: The direction of the frame part ("up", "left", "down", "right")
+        """
+        return self.frame_parts[dir.lower()]
 
 
 class FramePart:
@@ -28,11 +53,17 @@ class FramePart:
 
     The order of the list is the order they are drawn onto the screen
     """
-    def __init__(self) -> None:
-        self.list_of_sprites = []
+    def __init__(self, frame_part=None) -> None:
+        """
+        A frame part can be instantiated as an empty frame part or from another frame part
+        """
+        if not frame_part:
+            self.list_of_sprites_xs_ys = []
+        else:
+            self.list_of_sprites_xs_ys = [x for x in frame_part.list_of_sprites_xs_ys]
     
-    def add_sprite(self, sprite) -> None:
-        self.list_of_sprites.append(sprite)
+    def add_sprite_xs_ys(self, sprite_x_y: tuple) -> None:
+        self.list_of_sprites_xs_ys.append(sprite_x_y)
 
     def change_order(self, orig_ind, new_ind) -> None:
         """
@@ -41,7 +72,7 @@ class FramePart:
         @param orig_ind: The index of the sprite to be moved
         @param new_ind: The index to move the sprite to
         """
-        self.list_of_sprites.insert(new_ind, self.list_of_sprites.pop(orig_ind))
+        self.list_of_sprites_xs_ys.insert(new_ind, self.list_of_sprites.pop(orig_ind))
 
     def remove_by_index(self, ind) -> None:
         """
@@ -49,7 +80,7 @@ class FramePart:
 
         @param ind: The index of the sprite to be removed
         """
-        self.list_of_sprites.pop(ind)
+        self.list_of_sprites_xs_ys.pop(ind)
     
     def remove_by_sprite(self, sprite) -> None:
         """
@@ -57,7 +88,7 @@ class FramePart:
 
         @param sprite: The sprite to be removed
         """
-        self.list_of_sprites.remove(sprite)
+        self.list_of_sprites_xs_ys.remove(sprite)
 
     def get_sprite_by_index(self, ind) -> Sprite:
         """
@@ -65,14 +96,14 @@ class FramePart:
 
         @param ind: The index of the sprite to be returned
         """
-        return self.list_of_sprites[ind]
+        return self.list_of_sprites_xs_ys[ind]
     
-    def get_sprite_by_name(self, name) -> Sprite:
+    def get_sprite_by_description(self, desc) -> Sprite:
         """
         Gets a sprite from the list
 
         @param name: The name of the sprite to be returned
         """
         for sprite in self.list_of_sprites:
-            if sprite.name == name:
+            if sprite.desc == desc:
                 return sprite
