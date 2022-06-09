@@ -9,6 +9,7 @@ class Animator_GUI(Ui_MainWindow):
     def __init__(self, MainWindow) -> None:
         super().__init__()
         super().setupUi(MainWindow)
+        self.graphics_view_init()
 
         self.curr_dir = self.dir_combo_box.currentText()
         self.curr_animation = None
@@ -37,6 +38,38 @@ class Animator_GUI(Ui_MainWindow):
         # link open_btn to new_animation method
         self.open_btn.clicked.connect(lambda: self.new_animation(from_file=True))
 
+        # link scroll wheel to wheelEvent method
+        self.graphicsView.wheelEvent = self.wheelEvent
+    
+    def graphics_view_init(self):
+        self.graphicsView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.graphicsView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.graphicsView.setSceneRect(25, 50, self.graphicsView.width(), self.graphicsView.height())
+
+        # the intersection of the following lines is 0,0
+        self.graphicsView.setScene(QtWidgets.QGraphicsScene())
+        scene = self.graphicsView.scene()
+        scene.addLine(0, -1000, 0, 1000)
+        scene.addLine(-1000, 0, 1000, 0)
+
+        # set anchors to be center of the screen
+        self.graphicsView.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorViewCenter)
+        self.graphicsView.setResizeAnchor(QtWidgets.QGraphicsView.AnchorViewCenter)
+
+        # set default zoom percentage
+        self.graphicsView.scale(1.5, 1.5)
+
+        # draw a circle on the screen
+        scene.addEllipse(0, 0, 100, 100)
+        
+    # setup scroll wheel events for the graphics view
+    def wheelEvent(self, event):
+        if event.angleDelta().y() > 0:
+            self.graphicsView.scale(1.1, 1.1)
+        else:
+            self.graphicsView.scale(1 / 1.1, 1 / 1.1)
+        event.accept()
+
 
     def new_animation(self, from_file=False) -> None:
         if from_file:
@@ -48,13 +81,16 @@ class Animator_GUI(Ui_MainWindow):
             self.curr_animation = Animation()
 
     def reverse_frames(self) -> None:
-        pass
+        if self.curr_animation:
+            pass
 
     def save_animation_as(self) -> None:
-        pass
+        if self.curr_animation:
+            pass
 
     def save_animation(self) -> None:
-        pass
+        if self.curr_animation:
+            pass
 
     def change_dir(self) -> None:
         self.curr_dir = self.dir_combo_box.currentText()
@@ -63,10 +99,21 @@ class Animator_GUI(Ui_MainWindow):
         """
         Creates a new window that allows the user to create a new sprite
         """
-        new_sprite_window = QtWidgets.QDialog()
-        new_sprite_ui = NewSpriteDialog()
-        new_sprite_ui.setupUi(new_sprite_window)
-        new_sprite_window.exec_()
+        if self.curr_animation:
+            new_sprite_window = QtWidgets.QDialog()
+            new_sprite_ui = NewSpriteDialog()
+            new_sprite_ui.setupUi(new_sprite_window)
+            new_sprite_window.exec_()
+
+            # new_sprite_window.new_sprite_image_combobox
+            # new_sprite_window.new_sprite_custom_img_textbox
+            # new_sprite_window.new_sprite_description_textbox
+            # new_sprite_window.new_sprite_x_coord_textbox
+            # new_sprite_window.new_sprite_y_coord_textbox
+            # new_sprite_window.new_sprite_width_textbox
+            # new_sprite_window.new_sprite_height_textbox
+            # new_sprite_window.add_sprite_btn
+
 
         # link add_sprite_btn to add_sprite_to_current_frame method
         #TODO:
@@ -77,6 +124,7 @@ class Animator_GUI(Ui_MainWindow):
         """
         color = QtWidgets.QColorDialog.getColor()
         if color.isValid():
+            self.graphicsView.setBackgroundBrush(color)
             MainWindow.setStyleSheet(f"background-color: {color.name()}")
 
     def __get_gani_file(self):

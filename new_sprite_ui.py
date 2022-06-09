@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(700, 532)
+        Dialog.resize(511, 532)
         self.gridLayout = QtWidgets.QGridLayout(Dialog)
         self.gridLayout.setObjectName("gridLayout")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout()
@@ -45,6 +45,8 @@ class Ui_Dialog(object):
         self.new_sprite_image_combobox.addItem("")
         self.new_sprite_image_combobox.addItem("")
         self.horizontalLayout.addWidget(self.new_sprite_image_combobox)
+        self.horizontalLayout.setStretch(0, 1)
+        self.horizontalLayout.setStretch(1, 2)
         self.verticalLayout.addLayout(self.horizontalLayout)
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
@@ -125,9 +127,6 @@ class Ui_Dialog(object):
         self.add_sprite_btn = QtWidgets.QPushButton(Dialog)
         self.add_sprite_btn.setObjectName("add_sprite_btn")
         self.horizontalLayout_7.addWidget(self.add_sprite_btn)
-        self.cancel_btn = QtWidgets.QPushButton(Dialog)
-        self.cancel_btn.setObjectName("cancel_btn")
-        self.horizontalLayout_7.addWidget(self.cancel_btn)
         self.verticalLayout_3.addLayout(self.horizontalLayout_7)
         self.verticalLayout_3.setStretch(0, 1)
         self.verticalLayout_3.setStretch(1, 4)
@@ -162,4 +161,3 @@ class Ui_Dialog(object):
         self.label_6.setText(_translate("Dialog", "Width:"))
         self.label_7.setText(_translate("Dialog", "Height:"))
         self.add_sprite_btn.setText(_translate("Dialog", "Add Sprite"))
-        self.cancel_btn.setText(_translate("Dialog", "Cancel"))
