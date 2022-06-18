@@ -1,25 +1,30 @@
 from sprite import Sprite
 
+
 class Frame:
     def __init__(self, frame=None) -> None:
         """
         A frame can be instantiated as an empty frame or from another frame
         """
         if not frame:
-            self.frame_parts = {
+            self.__frame_parts = {
                 "up": FramePart(),
                 "left": FramePart(),
                 "down": FramePart(),
-                "right": FramePart(),
+                "right": FramePart()
             }
             self.length = 0.05
             self.sfx_file = ""
             self.wait = 0
         else:
-            self.frame_parts = {k:FramePart(v) for k,v in frame.frame_parts.items()}
+            self.__frame_parts = {k: FramePart(v) for k, v in frame.frame_parts.items()}
             self.length = frame.length
             self.sfx_file = frame.sfx_file
             self.wait = frame.wait
+            
+    @property
+    def frame_parts(self) -> dict:
+        return self.__frame_parts
     
     def reverse(self) -> None:
         """
@@ -34,13 +39,13 @@ class Frame:
     def set_wait(self, wait: int) -> None:
         self.wait = wait
     
-    def get_frame_part(self, dir: str) -> "FramePart":
+    def get_frame_part(self, direction: str) -> "FramePart":
         """
         Returns the frame part for the given direction
         
-        @param dir: The direction of the frame part ("up", "left", "down", "right")
+        @param direction: The direction of the frame part ("up", "left", "down", "right")
         """
-        return self.frame_parts[dir.lower()]
+        return self.frame_parts[direction.lower()]
 
 
 class FramePart:
@@ -61,6 +66,10 @@ class FramePart:
             self.list_of_sprites_xs_ys = []
         else:
             self.list_of_sprites_xs_ys = [x for x in frame_part.list_of_sprites_xs_ys]
+
+    @property
+    def list_of_sprites(self) -> list:
+        return self.list_of_sprites_xs_ys
     
     def add_sprite_xs_ys(self, sprite_x_y: tuple) -> None:
         self.list_of_sprites_xs_ys.append(sprite_x_y)
