@@ -8,3 +8,6 @@ class Sprite:
         self.rotation = int(rotation)
         self.index = int(sprite_index)
         self.desc = description
+    
+    def copy(self) -> "Sprite":
+        return Sprite(self.index, self.image, self.x, self.y, self.width, self.height, self.rotation, self.desc)

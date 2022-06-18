@@ -3,7 +3,7 @@ from ui import Ui_MainWindow
 from new_sprite_ui import Ui_Dialog as NewSpriteDialog
 from animation import Animation
 from scene import AniGraphicsView
-from draggable import DragImage
+from draggable import DragImage, DragSpriteView
 from PIL import Image
 from tempfile import TemporaryDirectory
 import sys
@@ -82,8 +82,8 @@ class Animator_GUI(Ui_MainWindow):
             self.__load_sprites_from_ani()
         if self.__curr_animation:
             self.__prepare_graphics_view()
-            for index, x, y in self.__curr_animation.frames[self.curr_frame].frame_parts[self.curr_dir].list_of_sprites:
-                self.__graphics_view.scene.addItem(DragImage(self, self.sprite_images[index], x, y))
+            for sprite, x, y in self.__curr_animation.frames[self.curr_frame].frame_parts[self.curr_dir].list_of_sprites:
+                self.__graphics_view.scene.addItem(DragImage(self, sprite, x, y))
 
     def __load_sprites_from_ani(self):
         def find_image(image_name):
@@ -150,23 +150,39 @@ class Animator_GUI(Ui_MainWindow):
         """
         Populate the scroll area with the current animation's sprites
         """
-        print("scroll area")
-        print(len(self.sprite_images))
         if self.__curr_animation:
             self.sprite_scroll_area.setWidget(QtWidgets.QWidget())
             self.sprite_scroll_area.widget().setLayout(QtWidgets.QVBoxLayout())
             for index, image in self.sprite_images.items():
-                im_view = QtWidgets.QGraphicsView(self.sprite_scroll_area.widget())
-                im_view.setScene(QtWidgets.QGraphicsScene())
-                im_view.scene().addPixmap(image)
-                im_view.setToolTip(f"Sprite {index}")
+                im_view = DragSpriteView(self, image, index, self.__curr_animation.sprites)
 
-                # disable all scrollbars
-                im_view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-                im_view.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+                im_view.mouseReleaseEvent = lambda e, i=index: self.__add_sprite_to_frame_part(i)
 
-                self.sprite_scroll_area.widget().layout().addWidget(im_view)
+    def __add_sprite_to_frame_part(self, index: int) -> None:
+        if self.__curr_animation:
+            self.curr_sprite = [sprite for sprite in self.__curr_animation.sprites if sprite.index == index][0].copy()
+            # map cursor coordinates to the graphics view scene rectangle
+            viewPoint = self.__graphics_view.mapFromGlobal(QtGui.QCursor.pos())
+            scenePoint = self.__graphics_view.mapToScene(viewPoint)
 
+            # add sprite to the current frame part
+            self.__get_current_frame_part().add_sprite_xs_ys(
+                (self.curr_sprite, scenePoint.x() - (self.curr_sprite.width / 2),
+                 scenePoint.y() - (self.curr_sprite.height / 2)))
+            self.display_current_frame()
+
+    def set_curr_sprite(self, index: int) -> None:
+        """
+        Set the current sprite to the sprite with the given index
+        If there are duplicate sprites on the canvas, it grabs the top one
+        """
+        self.curr_sprite = [sprite for sprite, x, y in self.__get_current_frame_part().list_of_sprites[::-1] if sprite.index == index][0]
+
+    def __get_current_frame_part(self):
+        return self.__get_current_frame().frame_parts[self.curr_dir]
+
+    def __get_current_frame(self):
+        return self.__curr_animation.frames[self.curr_frame]
 
     def __reverse_frames(self) -> None:
         if self.__curr_animation:

@@ -72,6 +72,10 @@ class FramePart:
         return self.list_of_sprites_xs_ys
     
     def add_sprite_xs_ys(self, sprite_x_y: tuple) -> None:
+        """
+        Adds a sprite to the list
+        Format: (Sprite, x, y)
+        """
         self.list_of_sprites_xs_ys.append(sprite_x_y)
 
     def change_order(self, orig_ind, new_ind) -> None:
@@ -99,7 +103,7 @@ class FramePart:
         """
         self.list_of_sprites_xs_ys.remove(sprite)
 
-    def get_sprite_by_index(self, ind) -> Sprite:
+    def get_sprite_by_positional_index(self, ind) -> Sprite:
         """
         Gets a sprite from the list
 
@@ -116,3 +120,6 @@ class FramePart:
         for sprite in self.list_of_sprites:
             if sprite.desc == desc:
                 return sprite
+
+    def get_sprite_by_index(self, ind) -> Sprite:
+        return []

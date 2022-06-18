@@ -121,7 +121,6 @@ class Animation:
             frame_part.add_sprite_xs_ys((sprite_index, x, y))
         self.__record_ani = False
 
-
     def __generate_frames(self, line: list) -> list:
         """
         @param line: a list containing the contents for a frame part
@@ -133,12 +132,12 @@ class Animation:
             sprite_index, x, y = line[i:i+3]
             if y[-1] == ',': y = y[:-1]  # drop comma
             frame_part = self.__frames[-1].get_frame_part(num_dir_map[self.__ani_dir])
-            frame_part.add_sprite_xs_ys((int(sprite_index), int(x), int(y)))
+            sprite = [sprite for sprite in self.__sprites_list if sprite.index == int(sprite_index)][0]
+            frame_part.add_sprite_xs_ys((sprite, int(x), int(y)))
 
         self.__ani_dir = self.__ani_dir + 1 if self.__ani_dir < 3 else 0
         if self.__ani_dir == 0:
             self.__record_ani = False
-
 
     def  __interpret_sprite_line(self, line: list) -> None:
         """
@@ -151,7 +150,6 @@ class Animation:
         else:
             self.__sprites_list.append(Sprite(*line[:6], description=' '.join(line[7:])))
 
-
     def __is_line_valid_sprite(self, line: list) -> bool:
         """
         @param line: The line to be checked
@@ -163,7 +161,6 @@ class Animation:
         if not self.__is_pos_or_neg_int(index) or not x.isdigit() or not y.isdigit() or not w.isdigit() or not h.isdigit():
             return False
         return True
-        
 
     def __is_pos_or_neg_int(self, value: str) -> bool:
         if value[0] == '-':
@@ -171,13 +168,13 @@ class Animation:
         return value.isdigit()
 
     def toggle_is_loop(self) -> None:
-        self.is_loop = not self.is_loop
+        self.__is_loop = not self.__is_loop
     
     def toggle_is_continuous(self) -> None:
-        self.is_continuous = not self.is_continuous
+        self.__is_continuous = not self.__is_continuous
 
     def toggle_single_dir(self) -> None:
-        self.single_dir = not self.single_dir
+        self.__single_dir = not self.__single_dir
 
     def set_attr(self, attr, value) -> None:
         """
@@ -187,7 +184,4 @@ class Animation:
         self.__attrs[attr.lower()] = value
     
     def set_setbackto(self, setbackto: str) -> None:
-        self.set_setbackto = setbackto
-
-    def get_sprites_list(self) -> list:
-        return self.__sprites_list
+        self.__setbackto = setbackto
