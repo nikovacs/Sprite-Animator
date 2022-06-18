@@ -1,6 +1,9 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 class DragImage(QtWidgets.QGraphicsPixmapItem):
+    """
+    Subclass of QGraphicsPixMapItem to allow for dragging of sprites on the canvas
+    """
     def __init__(self, parent, image, x=0, y=0):
         super().__init__(image)
         self.parent = parent
@@ -15,6 +18,7 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
 
     def mousePressEvent(self, event):
         print("pressed")
+        # TODO: Make this sprite the selected sprite
 
     def mouseMoveEvent(self, event):
         orig_pos = event.lastScenePos()
