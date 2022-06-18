@@ -23,10 +23,10 @@ class Animation:
         self.__single_dir = False
 
         self.__attrs = {
-            "head": "",
-            "body": "",
-            "shield": "",
-            "attr1": "",
+            "head": "head19.png",
+            "body": "body.png",
+            "shield": "shield1.png",
+            "attr1": "hat0.png",
             "attr2": "",
             "attr3": "",
             "attr12": "",
@@ -38,12 +38,20 @@ class Animation:
 
         if not from_file:
             self.__frames.append(Frame())
-            self.__attrs["head"] = "head19.png"
-            self.__attrs["body"] = "body.png"
-            self.__attrs["attr1"] = "hat0.png"
-        else:
+        if from_file:
             self.__set_attrs_from_existing_ani(from_file)
+    
+    @property
+    def frames(self) -> list:
+        return self.__frames
+    
+    @property
+    def sprites(self) -> list:
+        return self.__sprites_list
 
+    @property
+    def attrs(self) -> dict:
+        return self.__attrs
 
     def __set_attrs_from_existing_ani(self, file):
         # set some default values for parsing flags
@@ -101,7 +109,7 @@ class Animation:
                 
 
                 elif self.__is_line_valid_sprite(line):
-                    self.__interpret_sprite_line(line)
+                    self.__interpret_sprite_line(line[1:])
 
     def __generate_frames_for_single_dir(self, line: list) -> None:
         """
@@ -123,24 +131,25 @@ class Animation:
             self.__frames.append(Frame())
         for i in range(0, len(line), 3):
             sprite_index, x, y = line[i:i+3]
+            if y[-1] == ',': y = y[:-1]  # drop comma
             frame_part = self.__frames[-1].get_frame_part(num_dir_map[self.__ani_dir])
-            frame_part.add_sprite_xs_ys((sprite_index, x, y))
+            frame_part.add_sprite_xs_ys((int(sprite_index), int(x), int(y)))
 
         self.__ani_dir = self.__ani_dir + 1 if self.__ani_dir < 3 else 0
         if self.__ani_dir == 0:
             self.__record_ani = False
 
 
-    def __interpret_sprite_line(self, line: list) -> None:
+    def  __interpret_sprite_line(self, line: list) -> None:
         """
         A line being passed to this method should already be a guaranteed sprite.
         The line will be interpreted and added to the sprites_list.
         @param lines: list containing sprite data
         """
-        if len(line) == 7:
+        if len(line) == 6:
             self.__sprites_list.append(Sprite(*line))
         else:
-            self.__sprites_list.append(Sprite(*line[:7], description=' '.join(line[8:])))
+            self.__sprites_list.append(Sprite(*line[:6], description=' '.join(line[7:])))
 
 
     def __is_line_valid_sprite(self, line: list) -> bool:
