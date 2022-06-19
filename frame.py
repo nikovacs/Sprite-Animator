@@ -70,6 +70,57 @@ class FramePart:
     @property
     def list_of_sprites(self) -> list:
         return self.list_of_sprites_xs_ys
+
+    def change_sprite_xs_ys(self, layer: int, x=None, y=None) -> None:
+        """
+        Changes the location of the sprite on the screen
+        @param layer: The layer of the sprite to be moved
+        @param x: The new x coordinate of the sprite
+        @param y: The new y coordinate of the sprite
+        """
+        sprite, old_x, old_y = self.list_of_sprites_xs_ys[layer]
+        if not x: x = old_x
+        if not y: y = old_y
+        self.list_of_sprites_xs_ys[layer] = (sprite, x, y)
+
+    def shift(self, layer: int, direction: str, amount=1) -> None:
+        """
+        This method is meant to be called to update the position of a specific sprite in the list.\
+        @param layer: The layer of the sprite to be moved
+        @param direction: The direction of the shift ("horizontal", "vertical")
+        @param amount: The amount of pixels to shift the sprite
+        """
+        sprite, x, y = self.list_of_sprites_xs_ys[layer]
+        if direction.lower() == "horizontal":
+            x += amount
+        elif direction.lower() == "vertical":
+            y += amount
+        self.list_of_sprites_xs_ys[layer] = (sprite, x, y)
+
+    def change_layer(self, layer_to_move: int, direction: str) -> bool:
+        """
+        Changes the layer of the sprite within the list.
+        @param layer_to_move: The layer of the sprite to be moved (int)
+        @param direction: The direction of the change ("up", "down")
+        @return: boolean whether the layer was changed or not (not changed when already at the top or bottom)
+        return value is important in order to know whether the curr_sprite pointer is to be changed or not
+        """
+        if layer_to_move < 0 or layer_to_move >= len(self.list_of_sprites_xs_ys):
+            raise ValueError("Layer to move is out of range")
+        elif direction.lower() not in ('up', 'down'):
+            raise ValueError("Direction must be 'up' or 'down'")
+
+        if direction.lower() == "up":
+            if len(self.list_of_sprites_xs_ys)-1 > layer_to_move >= 0:
+                self.list_of_sprites_xs_ys[layer_to_move], self.list_of_sprites_xs_ys[layer_to_move + 1] = \
+                    self.list_of_sprites_xs_ys[layer_to_move + 1], self.list_of_sprites_xs_ys[layer_to_move]
+                return True
+        elif direction.lower() == "down":
+            if len(self.list_of_sprites_xs_ys) > layer_to_move > 0:
+                self.list_of_sprites_xs_ys[layer_to_move], self.list_of_sprites_xs_ys[layer_to_move - 1] = \
+                    self.list_of_sprites_xs_ys[layer_to_move - 1], self.list_of_sprites_xs_ys[layer_to_move]
+                return True
+        return False
     
     def add_sprite_xs_ys(self, sprite_x_y: tuple) -> None:
         """
@@ -87,39 +138,13 @@ class FramePart:
         """
         self.list_of_sprites_xs_ys.insert(new_ind, self.list_of_sprites.pop(orig_ind))
 
-    def remove_by_index(self, ind) -> None:
+    def remove_by_layer(self, layer) -> None:
         """
         Removes a sprite from the list
 
         @param ind: The index of the sprite to be removed
         """
-        self.list_of_sprites_xs_ys.pop(ind)
-    
-    def remove_by_sprite(self, sprite) -> None:
-        """
-        Removes a sprite from the list
+        self.list_of_sprites_xs_ys.pop(layer)
 
-        @param sprite: The sprite to be removed
-        """
-        self.list_of_sprites_xs_ys.remove(sprite)
-
-    def get_sprite_by_positional_index(self, ind) -> Sprite:
-        """
-        Gets a sprite from the list
-
-        @param ind: The index of the sprite to be returned
-        """
-        return self.list_of_sprites_xs_ys[ind]
-    
-    def get_sprite_by_description(self, desc) -> Sprite:
-        """
-        Gets a sprite from the list
-
-        @param name: The name of the sprite to be returned
-        """
-        for sprite in self.list_of_sprites:
-            if sprite.desc == desc:
-                return sprite
-
-    def get_sprite_by_index(self, ind) -> Sprite:
-        return []
+    def get_sprite_by_layer(self, layer: int) -> tuple:
+        return self.list_of_sprites_xs_ys[layer]
