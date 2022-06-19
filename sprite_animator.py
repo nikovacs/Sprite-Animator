@@ -27,7 +27,7 @@ class Animator_GUI(Ui_MainWindow):
         # acts as an index in an iterable. Ex. -1 can mean upper-most layer
         self.sprite_images = {}  # index: QPixmap
 
-        self.enable_disable_buttons(False)
+        btns = self.enable_disable_buttons(False)
 
         # link bg_color_btn to change_background_color method
         self.bg_color_btn.clicked.connect(self.__change_background_color)
@@ -59,7 +59,9 @@ class Animator_GUI(Ui_MainWindow):
         self.__graphics_view.wheelEvent = self.__do_wheel_event
 
         # add arrow key events
+        MainWindow.keyPressEvent = self.key_press_event
         self.__graphics_view.keyPressEvent = self.key_press_event
+        for btn in btns: btn.keyPressEvent = self.key_press_event
 
         # link +/- layer buttons
         self.plus_layer_btn.clicked.connect(lambda: self.__do_change_layer("up"))
@@ -80,56 +82,112 @@ class Animator_GUI(Ui_MainWindow):
         # link select_sprite_textbox and combobox
         self.selected_sprite_text.setValidator(QtGui.QIntValidator(-100000, 100000))
         self.selected_sprite_text.returnPressed.connect(lambda: self.set_curr_sprite(int(self.selected_sprite_text.text())))
-        # self.selected_sprite_combo.currentIndexChanged.connect(lambda: self.set_curr_sprite(self.selected_sprite_combo.currentIndex()))
-        # self.selected_sprite_combo.currentIndexChanged.connect(lambda: print(self.selected_sprite_combo.currentIndex()))
+        self.__sprite_combo_listen = False # important because we do not always want to listen when the combo box changes (it changes every time we update the current sprite / move a sprite (even if it does not look like it))
+        self.selected_sprite_combo.currentIndexChanged.connect(self.__do_sprite_combo_changed_event)
 
-    def enable_disable_buttons(self, enable: bool) -> None:
-        self.save_btn.setEnabled(enable)
-        self.saveas_btn.setEnabled(enable)
-        self.undo_btn.setEnabled(enable)
-        self.redo_btn.setEnabled(enable)
-        self.plus_sprite_btn.setEnabled(enable)
-        self.minus_unused_btn.setEnabled(enable)
-        self.import_btn.setEnabled(enable)
-        self.reverse_btn.setEnabled(enable)
-        self.plus_layer_btn.setEnabled(enable)
-        self.minus_layer_btn.setEnabled(enable)
-        self.plus_x_btn.setEnabled(enable)
-        self.minus_x_btn.setEnabled(enable)
-        self.plus_y_btn.setEnabled(enable)
-        self.minus_y_btn.setEnabled(enable)
-        self.play_btn.setEnabled(enable)
-        self.stop_btn.setEnabled(enable)
-        self.plus_frame_btn.setEnabled(enable)
-        self.minus_frame_btn.setEnabled(enable)
-        self.copy_btn.setEnabled(enable)
-        self.paste_left_btn.setEnabled(enable)
-        self.paste_right_btn.setEnabled(enable)
-        self.plus_sound_btn.setEnabled(enable)
-        self.x_textbox.setEnabled(enable)
-        self.y_textbox.setEnabled(enable)
-        self.selected_sprite_text.setEnabled(enable)
-        self.length_textbox.setEnabled(enable)
-        self.setbackto_textbox.setEnabled(enable)
-        self.def_head_textbox.setEnabled(enable)
-        self.def_body_textbox.setEnabled(enable)
-        self.def_attr1_textbox.setEnabled(enable)
-        self.def_attr2_textbox.setEnabled(enable)
-        self.def_attr3_textbox.setEnabled(enable)
-        self.def_attr12_textbox.setEnabled(enable)
-        self.param1_textbox.setEnabled(enable)
-        self.param2_textbox.setEnabled(enable)
-        self.param3_textbox.setEnabled(enable)
-        self.sound_textbox.setEnabled(enable)
-        self.loop_checkbox.setEnabled(enable)
-        self.continuous_checkbox.setEnabled(enable)
-        self.singledir_checkbox.setEnabled(enable)
-        self.dir_combo_box.setEnabled(enable)
-        self.selected_sprite_combo.setEnabled(enable)
-        self.frame_slider.setEnabled(enable)
+        # link length textbox
+        self.length_textbox.setValidator(QtGui.QDoubleValidator(0, 100000, 2))
+        self.length_textbox.returnPressed.connect(lambda: self.__set_frame_length(int(self.length_textbox.text())))
+
+        # link loop, continuous, and singledir checkboxes
+        self.loop_checkbox.stateChanged.connect(self.__do_loop_checkbox_changed_event)
+        self.continuous_checkbox.stateChanged.connect(self.__do_continuous_checkbox_changed_event)
+        self.singledir_checkbox.stateChanged.connect(self.__do_singledir_checkbox_changed_event)
+
+    def __do_singledir_checkbox_changed_event(self) -> None:
+        if self.__curr_animation:
+            self.__curr_animation.singledir = self.singledir_checkbox.isChecked()
+            # singledir and continuous are mutually exclusive
+            if self.singledir_checkbox.isChecked():
+                self.continuous_checkbox.setChecked(False)
+                self.__curr_animation.continuous = False
+            
+            # TODO make animation singledir or make multidir from singledir
+
+    def __do_continuous_checkbox_changed_event(self) -> None:
+        if self.__curr_animation:
+            self.__curr_animation.continuous = self.continuous_checkbox.isChecked()
+            # singledir and continuous should not be checked at the same time
+            if self.continuous_checkbox.isChecked():
+                self.singledir_checkbox.setChecked(False)
+                self.__curr_animation.singledir = False
+
+    def __do_loop_checkbox_changed_event(self) -> None:
+        if self.__curr_animation:
+            self.__curr_animation.loop = self.loop_checkbox.isChecked()
+
+    def __set_frame_length(self, length: int or float) -> None:
+        if self.__curr_animation:
+            self.__get_current_frame().length = length
+
+    def __do_sprite_combo_changed_event(self):
+        if self.__sprite_combo_listen:
+            self.set_curr_sprite(self.selected_sprite_combo.currentIndex())
+            self.__update_sprite_textboxes()
+
+    def enable_disable_buttons(self, enable: bool) -> list:
+        """
+        This method enables/disables all the buttons/other widgets in the GUI.
+        It alsos serves as an easy way to retrieve all the widgets in the GUI 
+        that we want to change the keyPressEvent of, so we return those widgets.
+        @param enable: True to enable, False to disable
+        """
+        lst_btns = [
+            self.save_btn,
+            self.saveas_btn,
+            self.undo_btn,
+            self.redo_btn,
+            self.plus_sprite_btn,
+            self.minus_unused_btn,
+            self.import_btn,
+            self.reverse_btn,
+            self.plus_layer_btn,
+            self.minus_layer_btn,
+            self.plus_x_btn,
+            self.minus_x_btn,
+            self.plus_y_btn,
+            self.minus_y_btn,
+            self.play_btn,
+            self.stop_btn,
+            self.plus_frame_btn,
+            self.minus_frame_btn,
+            self.copy_btn,
+            self.paste_left_btn,
+            self.paste_right_btn,
+            self.plus_sound_btn,
+            self.frame_slider,
+            self.continuous_checkbox,
+            self.singledir_checkbox,
+            self.dir_combo_box,
+            self.selected_sprite_combo,
+            self.loop_checkbox,
+        ]
+
+        others = [ # elements that we do not want to change the keyPressEvent of
+            self.x_textbox,
+            self.y_textbox,
+            self.selected_sprite_text,
+            self.length_textbox,
+            self.setbackto_textbox,
+            self.def_head_textbox,
+            self.def_body_textbox,
+            self.def_attr1_textbox,
+            self.def_attr2_textbox,
+            self.def_attr3_textbox,
+            self.def_attr12_textbox,
+            self.param1_textbox,
+            self.param2_textbox,
+            self.param3_textbox,
+            self.sound_textbox,
+        ]
+
+        [btn.setEnabled(enable) for btn in lst_btns]
+        [other.setEnabled(enable) for other in others]
+        return lst_btns # return the things we want to change the keyPressEvent of
+
 
     def __init_graphics_view(self):
-        self.__graphics_view = AniGraphicsView(self.centralwidget, -32, 32, 1.5)
+        self.__graphics_view = AniGraphicsView(self.centralwidget, -24, 0, 2)
         self.__graphics_view.setObjectName("graphicsView")
         self.horizontalLayout_3.insertWidget(1, self.__graphics_view)
         self.horizontalLayout_3.setStretch(0, 2)
@@ -154,9 +212,9 @@ class Animator_GUI(Ui_MainWindow):
     # setup scroll wheel events for the graphics view
     def __do_wheel_event(self, event):
         if event.angleDelta().y() > 0:
-            if self.__graphics_view.transform().m11() < 3: self.__graphics_view.scale(1.1, 1.1)
+            if self.__graphics_view.transform().m11() < 5: self.__graphics_view.scale(1.1, 1.1)
         else:
-            if self.__graphics_view.transform().m11() > 0.4: self.__graphics_view.scale(1 / 1.1, 1 / 1.1)
+            if self.__graphics_view.transform().m11() > 0.75: self.__graphics_view.scale(1 / 1.1, 1 / 1.1)
         event.accept()
 
     def key_press_event(self, event):
@@ -186,16 +244,19 @@ class Animator_GUI(Ui_MainWindow):
         self.__display_current_frame()
 
     def __update_sprite_textboxes(self) -> None:
+        self.__sprite_combo_listen = False
         self.__correct_current_sprite()
         self.x_textbox.setText(str(self.__get_current_frame_part().get_sprite_by_layer(self.curr_sprite)[1]))  # TODO consider making these named tuples to avoid indexing
         self.y_textbox.setText(str(self.__get_current_frame_part().get_sprite_by_layer(self.curr_sprite)[2]))
         self.selected_sprite_text.setText(str(self.curr_sprite))
         # populate the combo box with the sprites in the current frame
         self.selected_sprite_combo.clear()
-        [self.selected_sprite_combo.addItem(f"{i}: {sprite.desc}")
-         for i, (sprite, _, _) in enumerate(self.__get_current_frame_part().list_of_sprites)]
+        self.selected_sprite_combo.addItems([f"{i}: {sprite.desc}" for i, (sprite, _, _) in enumerate(self.__get_current_frame_part().list_of_sprites)])
         # set the current selection to the current sprite
         self.selected_sprite_combo.setCurrentIndex(self.curr_sprite)
+        self.__sprite_combo_listen = True
+        # set length box
+        self.length_textbox.setText(str(self.__get_current_frame().length))
 
     def __correct_current_sprite(self):
         if not 0 <= self.curr_sprite < len(self.__get_current_frame_part().list_of_sprites):
