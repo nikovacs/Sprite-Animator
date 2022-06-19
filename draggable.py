@@ -5,13 +5,21 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
     """
     Subclass of QGraphicsPixMapItem to allow for dragging of sprites on the canvas
     """
-    def __init__(self, parent, sprite, x=0, y=0):
+    def __init__(self, parent, sprite, layer_index, x=0, y=0):
+        """
+        @param parent: The parent widget of the sprite. Pass in self as arg when instantiating most of the time
+        @param sprite: The Sprite Object that is being drawn
+        @param layer_index: The index(order) of the sprite on the screen. Bottom-most sprite would be 0.
+        @param x: The x position of the sprite on the screen
+        @param y: The y position of the sprite on the screen
+        """
         super().__init__(parent.sprite_images[sprite.index])
         self.parent = parent
         self.sprite = sprite
+        self.layer_index = layer_index
         self.setPos(x, y)
         self.setAcceptHoverEvents(True)
-        self.__set_curr_sprite()
+        self.x, self.y = x, y
 
     def hoverEnterEvent(self, event):
         self.setCursor(QtCore.Qt.OpenHandCursor)
@@ -20,8 +28,8 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
         self.setCursor(QtCore.Qt.ArrowCursor)
 
     def mousePressEvent(self, event):
-        print("pressed")
-        # TODO: Make this sprite the selected sprite
+        self.setCursor(QtCore.Qt.ClosedHandCursor)
+        self.__set_curr_sprite()
 
     def mouseMoveEvent(self, event):
         self.setCursor(QtCore.Qt.ClosedHandCursor)
@@ -31,16 +39,21 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
         self.setPos(new_pos)
 
     def mouseReleaseEvent(self, event):
+        old_x, old_y = self.x, self.y
         self.setCursor(QtCore.Qt.OpenHandCursor)
-        x, y = round(self.pos().x()), round(self.pos().y())
-        self.setPos(x, y)
-        print(x, y)
+        self.x, self.y = round(self.pos().x()), round(self.pos().y())
+        self.setPos(self.x, self.y)
+        self.__set_new_sprite_pos(old_x, old_y)
 
-    def __set_new_sprite_pos(self, x, y):
-        pass # TODO : Set the new position of the sprite on the current frame part
+    def __set_new_sprite_pos(self, old_x: int, old_y: int) -> None:
+        x_diff, y_diff = self.x - old_x, self.y - old_y
+        if x_diff != 0:
+            self.parent.shift_sprite("horizontal", x_diff)
+        if y_diff != 0:
+            self.parent.shift_sprite("vertical", y_diff)
 
     def __set_curr_sprite(self):
-        self.parent.set_curr_sprite(self.sprite.index)
+        self.parent.set_curr_sprite(self.layer_index)
 
 
 class DragSpriteView(QtWidgets.QGraphicsView):
@@ -57,7 +70,7 @@ class DragSpriteView(QtWidgets.QGraphicsView):
         self.scene().addPixmap(image)
         self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
 
-        self.setToolTip(f"Sprite: {index}: " + [sprite.desc for sprite in all_sprites if sprite.index == index][0])
+        self.setToolTip(f"Sprite({index}) " + [sprite.desc for sprite in all_sprites if sprite.index == index][0])
         parent.sprite_scroll_area.widget().layout().addWidget(self)
 
     def enterEvent(self, event):
@@ -65,6 +78,13 @@ class DragSpriteView(QtWidgets.QGraphicsView):
 
     def leaveEvent(self, event):
         self.setCursor(QtCore.Qt.ArrowCursor)
+
+    def keyPressEvent(self, event):
+        """
+        Calls the keypressevent method of parent so that the sprite can still be moved by the arrow keys without having
+        to click on the main canvas window/sprite
+        """
+        self.parent.key_press_event(event)
 
 
 
