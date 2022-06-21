@@ -1,14 +1,17 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
-from ui import Ui_MainWindow
-from new_sprite_ui import Ui_Dialog as NewSpriteDialog
-from animation import Animation
-from scene import AniGraphicsView
-from draggable import DragImage, DragSpriteView
-from sprite import Sprite
-from PIL import Image
-from tempfile import TemporaryDirectory
-import sys
 import os
+import sys
+import time
+from tempfile import TemporaryDirectory
+
+from PIL import Image
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+from animation import Animation
+from draggable import DragImage, DragSpriteView
+from new_sprite_ui import Ui_Dialog as NewSpriteDialog
+from scene import AniGraphicsView
+from ui import Ui_MainWindow
+import pygame
 
 
 class Animator_GUI(Ui_MainWindow):
@@ -17,15 +20,7 @@ class Animator_GUI(Ui_MainWindow):
         super().setupUi(MainWindow)
         self.__init_graphics_view()
 
-        self.configs = {}
-        self.__load_configs()
-
-        self.curr_dir = "down"
-        self.__curr_animation = None
-        self.curr_frame = 0
-        self.curr_sprite = -1 # int (layer in the current frame part) a.k.a. index in the FramePart list
-        # acts as an index in an iterable. Ex. -1 can mean upper-most layer
-        self.sprite_images = {}  # index: QPixmap
+        self.__init_configs_variables()
 
         btns = self.enable_disable_buttons(False)
 
@@ -86,39 +81,167 @@ class Animator_GUI(Ui_MainWindow):
         self.selected_sprite_combo.currentIndexChanged.connect(self.__do_sprite_combo_changed_event)
 
         # link length textbox
-        self.length_textbox.setValidator(QtGui.QDoubleValidator(0, 100000, 2))
-        self.length_textbox.returnPressed.connect(lambda: self.__set_frame_length(int(self.length_textbox.text())))
+        self.length_textbox.setValidator(QtGui.QDoubleValidator(0.05, 100000, 2))
+        self.length_textbox.returnPressed.connect(lambda: self.__set_frame_length(float(self.length_textbox.text())))
 
         # link loop, continuous, and singledir checkboxes
         self.loop_checkbox.stateChanged.connect(self.__do_loop_checkbox_changed_event)
         self.continuous_checkbox.stateChanged.connect(self.__do_continuous_checkbox_changed_event)
         self.singledir_checkbox.stateChanged.connect(self.__do_singledir_checkbox_changed_event)
 
-    def __do_singledir_checkbox_changed_event(self) -> None:
-        if self.__curr_animation:
-            self.__curr_animation.singledir = self.singledir_checkbox.isChecked()
-            # singledir and continuous are mutually exclusive
-            if self.singledir_checkbox.isChecked():
-                self.continuous_checkbox.setChecked(False)
-                self.__curr_animation.continuous = False
-            
-            # TODO make animation singledir or make multidir from singledir
+        # link play and stop buttons
+        self.play_btn.clicked.connect(self.__play_animation)
+        self.stop_btn.clicked.connect(self.__stop_animation)
 
-    def __do_continuous_checkbox_changed_event(self) -> None:
-        if self.__curr_animation:
-            self.__curr_animation.continuous = self.continuous_checkbox.isChecked()
-            # singledir and continuous should not be checked at the same time
-            if self.continuous_checkbox.isChecked():
-                self.singledir_checkbox.setChecked(False)
-                self.__curr_animation.singledir = False
+        # link frame slider
+        self.frame_slider.valueChanged.connect(self.__do_frame_slider_changed_event)
+
+        # link plus frame and minus frame
+        self.plus_frame_btn.clicked.connect(self.__add_frame)
+        self.minus_frame_btn.clicked.connect(self.__remove_frame)
+
+        # link copy button
+        self.copy_btn.clicked.connect(self.__copy_frame)
+
+        # link paste buttons
+        self.paste_left_btn.clicked.connect(lambda: self.__paste_frame("left"))
+        self.paste_right_btn.clicked.connect(lambda: self.__paste_frame("right"))
+
+        # link ani attrs
+        self.def_head_textbox.returnPressed.connect(lambda: self.__set_attr("head", self.def_head_textbox.text().strip()))
+        self.def_body_textbox.returnPressed.connect(lambda: self.__set_attr("body", self.def_body_textbox.text().strip()))
+        self.def_attr1_textbox.returnPressed.connect(lambda: self.__set_attr("attr1", self.def_attr1_textbox.text().strip()))
+        self.def_attr2_textbox.returnPressed.connect(lambda: self.__set_attr("attr2", self.def_attr2_textbox.text().strip()))
+        self.def_attr3_textbox.returnPressed.connect(lambda: self.__set_attr("attr3", self.def_attr3_textbox.text().strip()))
+        self.def_attr12_textbox.returnPressed.connect(lambda: self.__set_attr("attr12", self.def_attr12_textbox.text().strip()))
+        self.param1_textbox.returnPressed.connect(lambda: self.__set_attr("param1", self.param1_textbox.text().strip()))
+        self.param2_textbox.returnPressed.connect(lambda: self.__set_attr("param2", self.param2_textbox.text().strip()))
+        self.param3_textbox.returnPressed.connect(lambda: self.__set_attr("param3", self.param3_textbox.text().strip()))
+
+        # link sound textbox
+        self.sound_textbox.returnPressed.connect(lambda: self.__set_sfx(self.sound_textbox.text().strip()))
+
+    def __set_sfx(self, sfx):
+        if self.curr_animation:
+            self.get_current_frame().set_sfx(sfx)
+            self.__display_current_frame()
+
+    def __update_sfx_textbox(self):
+        if self.curr_animation:
+            self.sound_textbox.setText(self.get_current_frame().sfx)
+
+    def __set_attr(self, attr: str, value: str) -> None:
+        if self.curr_animation:
+            self.curr_animation.set_attr(attr, value)
+            self.__update_attr_image(attr)
+            self.__display_current_frame()
+
+    def __paste_frame(self, direction) -> None:
+        """
+        @param direction: "left" or "right"
+        """
+        if self.__clipboard is None: return
+        direction = direction.lower()
+        if self.curr_animation:
+            self.curr_animation.add_new_frame(self.curr_frame, direction, self.__clipboard)
+            if direction == "right":
+                self.curr_frame += 1
+            self.__display_current_frame()
+
+    def __copy_frame(self):
+        if self.curr_animation:
+            self.__clipboard = self.get_current_frame()
+
+    def __add_frame(self) -> None:
+        if self.curr_animation:
+            self.curr_animation.add_new_frame(self.curr_frame)
+            self.curr_frame += 1
+            self.__display_current_frame()
+
+    def __remove_frame(self) -> None:
+        if self.curr_animation:
+            num_frames = self.__ani_length
+            self.curr_animation.remove_frame(self.curr_frame)
+            if not num_frames - 1 > self.curr_frame:
+                self.curr_frame -= 1
+            self.__display_current_frame()
+
+    def __init_configs_variables(self):
+        self.configs = {}
+        self.__load_configs()
+        self.__init_vars()
+
+    def __init_vars(self):
+        # pygame being used for playing .wav files
+        pygame.init()
+        pygame.mixer.init()
+
+        self.curr_dir = "down"
+        self.curr_animation = None
+        self.curr_frame = 0
+        self.curr_sprite = None  # int (layer in the current frame part) a.k.a. index in the FramePart list
+        # acts as an index in an iterable. Ex. -1 can mean upper-most layer
+        self.sprite_images = {}  # index: QPixmap
+        self.__sfx_dict = {}  # file: pygame.mixer.Sound object
+        self.play = False
+        self.__play_thread = None
+        self.__clipboard = None
+        self.time_label.setText("0.00")
+
+    @property
+    def __ani_length(self) -> int:
+        return len(self.curr_animation.frames)
+
+    def __do_frame_slider_changed_event(self) -> None:
+        self.curr_frame = self.frame_slider.value()
+        timer_val = sum([self.curr_animation.frames[i].length for i in range(self.curr_frame + 1)])
+        self.time_label.setText(f"{timer_val:.2f}")
+        self.curr_frame = self.frame_slider.value()
+        self.__display_current_frame()
+
+    def __set_frame_slider(self) -> None:
+        if self.__ani_length-1 != self.frame_slider.maximum():
+            self.__set_frame_slider_max()
+        self.frame_slider.setValue(self.curr_frame)
+
+    def __set_frame_slider_max(self) -> None:
+        self.frame_slider.setMaximum(self.__ani_length - 1)
+    
+    def __stop_animation(self) -> None:
+        self.play = False
+        self.__play_thread = None
+    
+    def __play_animation(self) -> None:
+        def overwrite_thread(parent):
+            parent.__play_thread = None
+        if self.play: return
+        self.__play_thread = RunAniWorker(self)
+        self.__play_thread.update_screen_signal.connect(self.__display_current_frame)
+        self.play = True
+        self.__play_thread.start()
+        self.__play_thread.finished.connect(lambda: overwrite_thread(self))
 
     def __do_loop_checkbox_changed_event(self) -> None:
-        if self.__curr_animation:
-            self.__curr_animation.loop = self.loop_checkbox.isChecked()
+        if self.curr_animation:
+            self.curr_animation.singledir = self.singledir_checkbox.isChecked()
+            if self.loop_checkbox.isChecked():
+                self.continuous_checkbox.setChecked(False)
+                self.curr_animation.continuous = False
+            
+    def __do_continuous_checkbox_changed_event(self) -> None:
+        if self.curr_animation:
+            self.curr_animation.continuous = self.continuous_checkbox.isChecked()
+            if self.continuous_checkbox.isChecked():
+                self.loop_checkbox.setChecked(False)
+                self.curr_animation.loop = False
+
+    def __do_singledir_checkbox_changed_event(self) -> None:
+        if self.curr_animation:
+            self.curr_animation.singledir = self.singledir_checkbox.isChecked()
 
     def __set_frame_length(self, length: int or float) -> None:
-        if self.__curr_animation:
-            self.__get_current_frame().length = length
+        if self.curr_animation:
+            self.get_current_frame().set_length(length)
 
     def __do_sprite_combo_changed_event(self):
         if self.__sprite_combo_listen:
@@ -154,7 +277,6 @@ class Animator_GUI(Ui_MainWindow):
             self.copy_btn,
             self.paste_left_btn,
             self.paste_right_btn,
-            self.plus_sound_btn,
             self.frame_slider,
             self.continuous_checkbox,
             self.singledir_checkbox,
@@ -183,8 +305,7 @@ class Animator_GUI(Ui_MainWindow):
 
         [btn.setEnabled(enable) for btn in lst_btns]
         [other.setEnabled(enable) for other in others]
-        return lst_btns # return the things we want to change the keyPressEvent of
-
+        return lst_btns  # return the things we want to change the keyPressEvent of
 
     def __init_graphics_view(self):
         self.__graphics_view = AniGraphicsView(self.centralwidget, -24, 0, 2)
@@ -201,8 +322,7 @@ class Animator_GUI(Ui_MainWindow):
         self.__graphics_view.scene.addLine(-100000, 0, 100000, 0)
 
     def __do_change_layer(self, direction: str) -> None:
-        changed = self.__get_current_frame_part().change_layer(self.curr_sprite, direction)
-        if changed:
+        if self.__sprites_exist() and self.get_current_frame_part().change_layer(self.curr_sprite, direction):
             if direction.lower() == "up":
                 self.curr_sprite += 1
             else:
@@ -217,7 +337,17 @@ class Animator_GUI(Ui_MainWindow):
             if self.__graphics_view.transform().m11() > 0.75: self.__graphics_view.scale(1 / 1.1, 1 / 1.1)
         event.accept()
 
-    def key_press_event(self, event):
+    def __delete_curr_sprite(self) -> None:
+        if self.curr_animation and self.curr_sprite and self.curr_sprite >= 0:
+            self.get_current_frame_part().list_of_sprites.pop(self.curr_sprite)
+            self.curr_sprite = -1 if len(self.get_current_frame_part().list_of_sprites) > 0 else None
+            self.__display_current_frame()
+
+    def key_press_event(self, event) -> None:
+        if not self.__sprites_exist(): return
+        if event.key() == QtCore.Qt.Key_Delete:
+            self.__delete_curr_sprite()
+            return
         direction = None
         amount = None
         if event.key() == QtCore.Qt.Key_Left:
@@ -240,87 +370,136 @@ class Animator_GUI(Ui_MainWindow):
         @param direction: "horizontal" or "vertical"
         @param amount: int amount to shift the sprite
         """
-        self.__get_current_frame_part().shift(self.curr_sprite, direction, amount)
+        if not self.__sprites_exist(): return
+        self.get_current_frame_part().shift(self.curr_sprite, direction, amount)
         self.__display_current_frame()
 
+    def __sprites_exist(self) -> bool:
+        return len(self.get_current_frame_part().list_of_sprites) > 0
+
     def __update_sprite_textboxes(self) -> None:
+        if not self.__sprites_exist(): return
         self.__sprite_combo_listen = False
         self.__correct_current_sprite()
-        self.x_textbox.setText(str(self.__get_current_frame_part().get_sprite_by_layer(self.curr_sprite)[1]))  # TODO consider making these named tuples to avoid indexing
-        self.y_textbox.setText(str(self.__get_current_frame_part().get_sprite_by_layer(self.curr_sprite)[2]))
+        self.x_textbox.setText(str(self.get_current_frame_part().list_of_sprites[self.curr_sprite][1]))  # TODO consider making these named tuples to avoid indexing
+        self.y_textbox.setText(str(self.get_current_frame_part().list_of_sprites[self.curr_sprite][2]))
         self.selected_sprite_text.setText(str(self.curr_sprite))
-        # populate the combo box with the sprites in the current frame
         self.selected_sprite_combo.clear()
-        self.selected_sprite_combo.addItems([f"{i}: {sprite.desc}" for i, (sprite, _, _) in enumerate(self.__get_current_frame_part().list_of_sprites)])
-        # set the current selection to the current sprite
+        self.selected_sprite_combo.addItems([f"{i}: {sprite.desc}" for i, (sprite, _, _) in enumerate(self.get_current_frame_part().list_of_sprites)])
         self.selected_sprite_combo.setCurrentIndex(self.curr_sprite)
         self.__sprite_combo_listen = True
-        # set length box
-        self.length_textbox.setText(str(self.__get_current_frame().length))
+        self.length_textbox.setText(str(self.get_current_frame().length))
 
     def __correct_current_sprite(self):
-        if not 0 <= self.curr_sprite < len(self.__get_current_frame_part().list_of_sprites):
+        if self.curr_sprite is None: self.curr_sprite = -1 if self.__sprites_exist() else None
+        if not 0 <= self.curr_sprite < len(self.get_current_frame_part().list_of_sprites):
             # curr_sprite must be something like -1, so we should convert it to the correct index for display
             if self.curr_sprite < 0:
-                self.curr_sprite = len(self.__get_current_frame_part().list_of_sprites) + self.curr_sprite
+                self.curr_sprite = len(self.get_current_frame_part().list_of_sprites) + self.curr_sprite
 
     def __set_sprite_location(self, x=None, y=None) -> None:
-        self.__get_current_frame_part().change_sprite_xs_ys(self.curr_sprite, x, y)
+        if not self.__sprites_exist(): return
+        self.get_current_frame_part().change_sprite_xs_ys(self.curr_sprite, x, y)
         self.__display_current_frame()
 
     def __display_current_frame(self) -> None:
         if len(self.sprite_images) == 0:
             self.__load_sprites_from_ani()
-        if self.__curr_animation:
+        if self.curr_animation:
+            if self.get_current_frame().sfx != "" and self.get_current_frame().sfx not in self.__sfx_dict:
+                self.__load_sfx_from_ani()
+            self.curr_sprite = self.curr_sprite if self.curr_sprite is None or 0 <= self.curr_sprite < len(self.get_current_frame_part().list_of_sprites) else -1
+            self.__correct_current_sprite()
             self.__prepare_graphics_view()
-            for i, (sprite, x, y) in \
-                    enumerate(self.__get_current_frame_part().list_of_sprites):
+            for i, (sprite, x, y) in enumerate(self.get_current_frame_part().list_of_sprites):
                 self.__graphics_view.scene.addItem(DragImage(self, sprite, i, x, y))
             self.__update_sprite_textboxes()
+            self.__set_frame_slider()
+            self.__update_sfx_textbox()
+            self.__play_frame_sfx()
+
+    def __play_frame_sfx(self) -> None:
+        if sfx := self.get_current_frame().sfx:
+            if self.__sfx_dict[sfx]: self.__sfx_dict[sfx].play()
+
+    def __update_attr_image(self, attr: str) -> None:
+        attr = attr.upper()
+        sprites = [sprite for sprite in self.curr_animation.sprites if sprite.image == attr]
+        with TemporaryDirectory() as temp_dir:
+            for sprite in sprites: self.__load_and_crop_sprite(self.__find_file(sprite.image), sprite, temp_dir)
+
+    def __load_sfx_from_ani(self) -> None:
+        if self.curr_animation:
+            for sfx in (sfxs := [frame.sfx for frame in self.curr_animation.frames if frame.sfx]):
+                print(sfx)
+                if sfx and sfx not in self.__sfx_dict.keys():
+                    print("adding sfx to dict")
+                    sfx_path = self.__find_file(sfx)
+                    self.__sfx_dict[sfx] = pygame.mixer.Sound(sfx_path) if sfx_path else None
+
+            print(self.__sfx_dict)
+
+            # remove any old sfxs from the dictionary
+            for sfx in self.__sfx_dict.keys():
+                if sfx not in sfxs:
+                    print("removing olf sfx from dict")
+                    del self.__sfx_dict[sfx]
 
     def __load_sprites_from_ani(self):
-        def find_image(image_name):
-            # TODO if GameFolder in config does not exist, prompt user to enter their game folder path
-            for root, dirs, files in os.walk(self.configs["GameFolder"]):
-                for file in files:
-                    if file.split(".")[0].lower() == image_name or file.lower() == image_name:
-                        return os.path.join(root, file)
-            image_name = image_name.upper()
-            if image_name == "SPRITES":
-                return find_image("sprites.png")
-            elif image_name == "SHIELD":
-                return find_image(self.__curr_animation.attrs['shield'])
-            elif image_name == "BODY":
-                return find_image(self.__curr_animation.attrs['body'])
-            elif image_name == "HEAD":
-                return find_image(self.__curr_animation.attrs['head'])
-            elif image_name == "ATTR1":
-                return find_image(self.__curr_animation.attrs['attr1'])
-            elif image_name == "ATTR2":
-                return find_image(self.__curr_animation.attrs['attr2'])
-            elif image_name == "ATTR3":
-                return find_image(self.__curr_animation.attrs['attr3'])
-            elif image_name == "ATTR12":
-                return find_image(self.__curr_animation.attrs['attr12'])
-            elif image_name == "PARAM1":
-                return find_image(self.__curr_animation.attrs['param1'])
-            elif image_name == "PARAM2":
-                return find_image(self.__curr_animation.attrs['param2'])
-            elif image_name == "PARAM3":
-                return find_image(self.__curr_animation.attrs['param3'])
-
-        if self.__curr_animation:
+        if self.curr_animation:
             with TemporaryDirectory() as tempdir:
-                for sprite in self.__curr_animation.sprites:
-                    image_path = find_image(sprite.image)
+                for sprite in self.curr_animation.sprites:
+                    image_path = self.__find_file(sprite.image)
                     if image_path:
-                        image = Image.open(image_path)
-                        image = image.crop((sprite.x, sprite.y, sprite.x + sprite.width, sprite.y + sprite.height))
-                        # TODO add stretch effects, rotation effects, color effects.
-                        image.save(os.path.join(tempdir, f"{sprite.index}.png"))
-                        self.sprite_images[sprite.index] = QtGui.QPixmap(os.path.join(tempdir, f"{sprite.index}.png"))
+                        self.__load_and_crop_sprite(image_path, sprite, tempdir)
                     else:
-                        self.sprite_images[sprite.index] = QtGui.QPixmap(sprite.width, sprite.height)
+                        self.__make_default_sprite_img(sprite)
+
+    def __make_default_sprite_img(self, sprite):
+        self.sprite_images[sprite.index] = QtGui.QPixmap(sprite.width, sprite.height)
+
+    def __load_and_crop_sprite(self, image_path, sprite, tempdir):
+        """
+        This method is intended to be called from within a with TemporaryDirectory() block.
+        """
+        if image_path:
+            image = Image.open(image_path)
+            image = image.crop((sprite.x, sprite.y, sprite.x + sprite.width, sprite.y + sprite.height))
+            # TODO add stretch effects, rotation effects, color effects.
+            image.save(os.path.join(tempdir, f"{sprite.index}.png"))
+            self.sprite_images[sprite.index] = QtGui.QPixmap(os.path.join(tempdir, f"{sprite.index}.png"))
+        else:
+            self.__make_default_sprite_img(sprite)
+
+    def __find_file(self, file_name):
+        # TODO if GameFolder in config does not exist, prompt user to enter their game folder path
+        for root, dirs, files in os.walk(r"C:\Users\kovac\Graal"):  # TODO TEMP HARD CODED TO MY GAME FOLDER, USE GLOB FOR FASTER LOADING
+            for file in files:
+                if file.split(".")[0].lower() == file_name or file.lower() == file_name:
+                    return os.path.join(root, file)
+        file_name = file_name.upper()
+        if file_name == "SPRITES":
+            return self.__find_file("sprites.png")
+        elif file_name == "SHIELD":
+            return self.__find_file(self.curr_animation.attrs['shield'])
+        elif file_name == "BODY":
+            return self.__find_file(self.curr_animation.attrs['body'])
+        elif file_name == "HEAD":
+            return self.__find_file(self.curr_animation.attrs['head'])
+        elif file_name == "ATTR1":
+            return self.__find_file(self.curr_animation.attrs['attr1'])
+        elif file_name == "ATTR2":
+            return self.__find_file(self.curr_animation.attrs['attr2'])
+        elif file_name == "ATTR3":
+            return self.__find_file(self.curr_animation.attrs['attr3'])
+        elif file_name == "ATTR12":
+            return self.__find_file(self.curr_animation.attrs['attr12'])
+        elif file_name == "PARAM1":
+            return self.__find_file(self.curr_animation.attrs['param1'])
+        elif file_name == "PARAM2":
+            return self.__find_file(self.curr_animation.attrs['param2'])
+        elif file_name == "PARAM3":
+            return self.__find_file(self.curr_animation.attrs['param3'])
 
     def __load_configs(self) -> None:
         with open("./config.txt", "r") as f:
@@ -329,46 +508,65 @@ class Animator_GUI(Ui_MainWindow):
                 self.configs[key] = val.strip()
 
     def __new_animation(self, from_file=False) -> None:
+        self.__init_configs_variables()
         if from_file:
             # display a QFileDialog to get the file name
             file = self.__get_gani_file()
             if file.endswith(".gani"):
-                self.__curr_animation = Animation(from_file=file)
+                self.curr_animation = Animation(from_file=file)
         else:
-            self.__curr_animation = Animation()
-        self.__display_current_frame()
-        self.__init_scroll_area()
+            self.curr_animation = Animation()
 
-        self.enable_disable_buttons(True)
+        if self.curr_animation:
+            self.__display_current_frame()
+            self.__init_scroll_area()
+            self.enable_disable_buttons(True)
+            self.__set_frame_slider_max()
+            self.__set_animation_textboxes()
+            self.__load_sfx_from_ani()
+
+    def __set_animation_textboxes(self) -> None:
+        if self.curr_animation:
+            self.setbackto_textbox.setText(self.curr_animation.setbackto)
+            self.def_head_textbox.setText(self.curr_animation.attrs['head'])
+            self.def_body_textbox.setText(self.curr_animation.attrs['body'])
+            self.def_attr1_textbox.setText(self.curr_animation.attrs['attr1'])
+            self.def_attr2_textbox.setText(self.curr_animation.attrs['attr2'])
+            self.def_attr3_textbox.setText(self.curr_animation.attrs['attr3'])
+            self.def_attr12_textbox.setText(self.curr_animation.attrs['attr12'])
+            self.param1_textbox.setText(self.curr_animation.attrs['param1'])
+            self.param2_textbox.setText(self.curr_animation.attrs['param2'])
+            self.param3_textbox.setText(self.curr_animation.attrs['param3'])
 
     def __init_scroll_area(self) -> None:
         """
         Populate the scroll area with the current animation's sprites
         """
-        if self.__curr_animation:
+        if self.curr_animation:
             self.sprite_scroll_area.setWidget(QtWidgets.QWidget())
             self.sprite_scroll_area.widget().setLayout(QtWidgets.QVBoxLayout())
             for index, image in self.sprite_images.items():
-                im_view = DragSpriteView(self, image, index, self.__curr_animation.sprites)
+                im_view = DragSpriteView(self, image, index, self.curr_animation.sprites)
                 im_view.mouseReleaseEvent = lambda e, i=index: self.__add_sprite_to_frame_part(i)
 
     def __add_sprite_to_frame_part(self, index: int) -> None:
         """
         Add a sprite to the current frame part on the top layer
         """
-        if self.__curr_animation:
+        if self.curr_animation:
             # map cursor coordinates to the graphics view scene rectangle
             viewPoint = self.__graphics_view.mapFromGlobal(QtGui.QCursor.pos())
             scenePoint = self.__graphics_view.mapToScene(viewPoint)
 
-            sprite_to_add = [sprite for sprite in self.__curr_animation.sprites if sprite.index == index][0]
+            sprite_to_add = [sprite for sprite in self.curr_animation.sprites if sprite.index == index][0]
 
             # add sprite to the current frame part
-            sprite_tuple = (sprite_to_add, scenePoint.x() - (sprite_to_add.width / 2),
-                            scenePoint.y() - (sprite_to_add.height / 2))
-            self.__get_current_frame_part().add_sprite_xs_ys(sprite_tuple)
+            sprite_tuple = (sprite_to_add, round(scenePoint.x() - (sprite_to_add.width / 2)),
+                            round(scenePoint.y() - (sprite_to_add.height / 2)))
+            self.get_current_frame_part().add_sprite_xs_ys(sprite_tuple)
+            self.set_curr_sprite(-1)
+            self.__correct_current_sprite()
             self.__display_current_frame()
-            self.curr_sprite = -1
 
     def set_curr_sprite(self, layer: int) -> None:
         """
@@ -376,36 +574,36 @@ class Animator_GUI(Ui_MainWindow):
         Important to specify this way instead of Sprite is Sprite because there can be duplicate sprites
         on the same frame part in different locations.
         """
-        if 0 <= layer < len(self.__get_current_frame_part().list_of_sprites):
+        if 0 <= layer < len(self.get_current_frame_part().list_of_sprites):
             self.curr_sprite = layer
             self.__update_sprite_textboxes()
 
-    def __get_current_frame_part(self):
+    def get_current_frame_part(self):
         """
         Gets the current frame part with respect to the current value of self.curr_dir
         """
-        return self.__get_current_frame().frame_parts[self.curr_dir]
+        return self.get_current_frame().frame_parts[self.curr_dir]
 
-    def __get_current_frame(self):
+    def get_current_frame(self):
         """
         Gets the current frame with respect to the current value of self.curr_frame
         """
-        return self.__curr_animation.frames[self.curr_frame]
+        return self.curr_animation.frames[self.curr_frame]
 
     def __reverse_frames(self) -> None:
         """
         Reverses the order of the frames in the current animation
         """
-        if self.__curr_animation:
+        if self.curr_animation:
             pass
 
     def __save_animation_as(self) -> None:
-        if self.__curr_animation:
-            pass
+        if self.curr_animation:
+            pass # TODO
 
     def __save_animation(self) -> None:
-        if self.__curr_animation:
-            pass
+        if self.curr_animation:
+            pass # TODO
 
     def __change_dir(self) -> None:
         self.curr_dir = self.dir_combo_box.currentText().lower()
@@ -415,7 +613,7 @@ class Animator_GUI(Ui_MainWindow):
         """
         Creates a new window that allows the user to create a new sprite
         """
-        if self.__curr_animation:
+        if self.curr_animation:
             new_sprite_window = QtWidgets.QDialog()
             new_sprite_ui = NewSpriteDialog()
             new_sprite_ui.setupUi(new_sprite_window)
@@ -442,7 +640,7 @@ class Animator_GUI(Ui_MainWindow):
             self.__graphics_view.setBackgroundBrush(color)
             MainWindow.setStyleSheet(f"background-color: {color.name()}")
 
-    def __get_gani_file(self):
+    def __get_gani_file(self) -> str:
         """
         Displays a QFileDialog to get a gani file
         """
@@ -450,6 +648,25 @@ class Animator_GUI(Ui_MainWindow):
                                                      os.path.normpath('E:\Downloads\ganis\ganis'),
                                                      "Gani Files (*.gani)")
         return file[0]
+
+
+class RunAniWorker(QtCore.QThread):
+    update_screen_signal = QtCore.pyqtSignal()
+
+    def __init__(self, parent: Animator_GUI):
+        super().__init__()
+        self.parent = parent
+
+    def run(self):
+        if self.parent.curr_animation:
+            while self.parent.play:
+                for i in range(len(self.parent.curr_animation.frames)):
+                    self.parent.curr_frame = i
+                    self.update_screen_signal.emit()
+                    if not self.parent.play: return  # allows stopping mid-animation
+                    time.sleep(self.parent.get_current_frame().length)
+                if not self.parent.curr_animation.is_loop:
+                    self.parent.play = False
 
 
 if __name__ == '__main__':
