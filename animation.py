@@ -1,5 +1,6 @@
 from frame import Frame
 from sprite import Sprite
+import copy
 
 class Animation:
     """
@@ -18,9 +19,9 @@ class Animation:
         # Empty ani defaults these to False and 
         # loading from an existing ani will 
         # overwrite them if needed
-        self.__is_loop = False
-        self.__is_continuous = False
-        self.__single_dir = False
+        self.is_loop = False
+        self.is_continuous = False
+        self.is_single_dir = False
 
         self.__attrs = {
             "head": "head19.png",
@@ -53,6 +54,25 @@ class Animation:
     def attrs(self) -> dict:
         return self.__attrs
 
+    @property
+    def setbackto(self) -> str:
+        return self.__setbackto
+
+    def add_new_frame(self, index: int, direction="right", frame_from_clipboard=None) -> None:
+        """
+        @param index: the index of the frame to insert the new frame
+        @param direction: "left" or "right"
+        @param frame_from_clipboard: Frame object to insert
+        """
+        offset = 1 if direction == "right" else 0
+        if not frame_from_clipboard:
+            self.__frames.insert(index+offset, Frame())
+        else:
+            self.__frames.insert(index+offset, copy.deepcopy(frame_from_clipboard))
+
+    def remove_frame(self, index: int) -> None:
+        self.__frames.pop(index)
+
     def __set_attrs_from_existing_ani(self, file):
         # set some default values for parsing flags
         self.__record_ani = False # instance variable because used in helper method
@@ -60,27 +80,26 @@ class Animation:
 
         with open(file, 'r') as f:
             for line in f:
-                line = line.split()
+                line = line.strip().split()
                 if len(line) == 0:
                     continue
                     # lines in file are tab delimited
                     # ex. ['SPRITE', '-1000', 'ATTR12', '0', '0', '64', '64', 'backpack']
-                if self.__record_ani and not self.__single_dir:
-                    self.__generate_frames(line)
-                elif self.__record_ani and self.__single_dir:
-                    self.__generate_frames_for_single_dir(line)
-                elif record_script:
+                if record_script:
                     self.__script.append(line)
                 elif line[0].upper() == "PLAYSOUND":
-                        self.__frames[-1].set_sfx(line[1:]) 
+                    self.__frames[-1].set_sfx(' '.join(line[1:2]))
                 elif line[0].upper() == "WAIT":
-                    self.__frames[-1].set_wait(line[1])
-                if line[0].upper() == "SCRIPT":
+                    self.__frames[-1].set_length((int(line[1])+1) * 0.05)
+                    # wait times in ganis are weird....
+                    # WAIT = wait as it appears on the gani file (an integer)
+                    # length = (WAIT+1) * 0.05
+                elif line[0].upper() == "SCRIPT":
                     record_script = True
                 elif line[0].upper() == "SCRIPTEND":
                     record_script = False
                 elif line[0].upper() == "SETBACKTO":
-                    self.setbackto = line[1] if len(line) > 1 else ""
+                    self.__setbackto = line[1] if len(line) > 1 else ""
                 elif line[0].upper() == "DEFAULTATTR1":
                     self.__attrs["attr1"] = line[1] if len(line) > 1 else ""
                 elif line[0].lower() == "DEFAULTHEAD":
@@ -95,19 +114,21 @@ class Animation:
                 elif line[0].upper() == "ANIEND":
                     self.__record_ani = False
                 elif line[0].upper() == "SINGLEDIRECTION":
-                    self.__single_dir = True
+                    self.is_single_dir = True
                 elif line[0].upper() == "CONTINUOUS":
-                    self.__is_continuous = True
+                    self.is_continuous = True
                 elif line[0].upper() == "LOOP":
-                    self.__is_loop = True
+                    self.is_loop = True
                 elif line[0].upper() == "COLOREFFECT":
                     self.__color_effects.append(line[1:]  if len(line) > 1 else "")
                 elif line[0].upper() == "ROTATEEFFECT":
                     self.__rotate_effects.append(line[1:] if len(line) > 1 else "")
                 elif line[0].upper() == "STRETCHEFFECT":
                     self.__stretch_effects.append(line[1:] if len(line) > 1 else "")
-                
-
+                elif self.__record_ani and not self.is_single_dir:
+                    self.__generate_frames(line)
+                elif self.__record_ani and self.is_single_dir:
+                    self.__generate_frames_for_single_dir(line)
                 elif self.__is_line_valid_sprite(line):
                     self.__interpret_sprite_line(line[1:])
 
@@ -117,11 +138,11 @@ class Animation:
         """
         for i in range(0, len(line), 3):
             sprite_index, x, y = line[i:i+3]
-            frame_part = self.__frames[-1].get_frame_part("up")
+            frame_part = self.__frames[-1].frame_parts["up"]  # TODO fix
             frame_part.add_sprite_xs_ys((sprite_index, x, y))
         self.__record_ani = False
 
-    def __generate_frames(self, line: list) -> list:
+    def __generate_frames(self, line: list) -> None:
         """
         @param line: a list containing the contents for a frame part
         """
@@ -131,13 +152,10 @@ class Animation:
         for i in range(0, len(line), 3):
             sprite_index, x, y = line[i:i+3]
             if y[-1] == ',': y = y[:-1]  # drop comma
-            frame_part = self.__frames[-1].get_frame_part(num_dir_map[self.__ani_dir])
+            frame_part = self.__frames[-1].frame_parts[(num_dir_map[self.__ani_dir])]
             sprite = [sprite for sprite in self.__sprites_list if sprite.index == int(sprite_index)][0]
             frame_part.add_sprite_xs_ys((sprite, int(x), int(y)))
-
         self.__ani_dir = self.__ani_dir + 1 if self.__ani_dir < 3 else 0
-        if self.__ani_dir == 0:
-            self.__record_ani = False
 
     def  __interpret_sprite_line(self, line: list) -> None:
         """
@@ -168,13 +186,13 @@ class Animation:
         return value.isdigit()
 
     def toggle_is_loop(self) -> None:
-        self.__is_loop = not self.__is_loop
+        self.is_loop = not self.is_loop
     
     def toggle_is_continuous(self) -> None:
-        self.__is_continuous = not self.__is_continuous
+        self.is_continuous = not self.is_continuous
 
     def toggle_single_dir(self) -> None:
-        self.__single_dir = not self.__single_dir
+        self.is_single_dir = not self.is_single_dir
 
     def set_attr(self, attr, value) -> None:
         """
