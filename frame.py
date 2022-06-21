@@ -1,26 +1,24 @@
-from sprite import Sprite
-
-
 class Frame:
-    def __init__(self, frame=None) -> None:
+    def __init__(self) -> None:
         """
         A frame can be instantiated as an empty frame or from another frame
         """
-        if not frame:
-            self.__frame_parts = {
-                "up": FramePart(),
-                "left": FramePart(),
-                "down": FramePart(),
-                "right": FramePart()
-            }
-            self.length = 0.05
-            self.sfx_file = ""
-            self.wait = 0
-        else:
-            self.__frame_parts = {k: FramePart(v) for k, v in frame.frame_parts.items()}
-            self.length = frame.length
-            self.sfx_file = frame.sfx_file
-            self.wait = frame.wait
+        self.__frame_parts = {
+            "up": FramePart(),
+            "left": FramePart(),
+            "down": FramePart(),
+            "right": FramePart()
+        }
+        self.__length = 0.05
+        self.__sfx_file = ""
+
+    @property
+    def length(self) -> float:
+        return self.__length
+
+    @property
+    def sfx(self) -> str:
+        return self.__sfx_file
             
     @property
     def frame_parts(self) -> dict:
@@ -34,18 +32,10 @@ class Frame:
             self.frame_parts[key] = values[::-1]
     
     def set_sfx(self, file: str) -> None:
-        self.sfx_file = file
+        self.__sfx_file = file
 
-    def set_wait(self, wait: int) -> None:
-        self.wait = wait
-    
-    def get_frame_part(self, direction: str) -> "FramePart":
-        """
-        Returns the frame part for the given direction
-        
-        @param direction: The direction of the frame part ("up", "left", "down", "right")
-        """
-        return self.frame_parts[direction.lower()]
+    def set_length(self, length: float) -> None:
+        self.__length = length if length >= 0.05 else 0.05
 
 
 class FramePart:
@@ -146,5 +136,3 @@ class FramePart:
         """
         self.list_of_sprites_xs_ys.pop(layer)
 
-    def get_sprite_by_layer(self, layer: int) -> tuple:
-        return self.list_of_sprites_xs_ys[layer]
