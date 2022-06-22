@@ -396,8 +396,8 @@ class Animator_GUI(Ui_MainWindow):
         if not self.__sprites_exist(): return
         self.__sprite_combo_listen = False
         self.__correct_current_sprite()
-        self.x_textbox.setText(str(self.get_current_frame_part().list_of_sprites[self.curr_sprite][1]))  # TODO consider making these named tuples to avoid indexing
-        self.y_textbox.setText(str(self.get_current_frame_part().list_of_sprites[self.curr_sprite][2]))
+        self.x_textbox.setText(f"{self.get_current_frame_part().list_of_sprites[self.curr_sprite][1]:.2f}")  # TODO consider making these named tuples to avoid indexing
+        self.y_textbox.setText(f"{self.get_current_frame_part().list_of_sprites[self.curr_sprite][2]:.2f}")
         self.selected_sprite_text.setText(str(self.curr_sprite))
         self.selected_sprite_combo.clear()
         self.selected_sprite_combo.addItems([f"{i}: {sprite.desc}" for i, (sprite, _, _) in enumerate(self.get_current_frame_part().list_of_sprites)])
@@ -563,7 +563,9 @@ class Animator_GUI(Ui_MainWindow):
         if self.curr_animation:
             self.sprite_scroll_area.setWidget(QtWidgets.QWidget())
             self.sprite_scroll_area.widget().setLayout(QtWidgets.QVBoxLayout())
-            for index, image in self.sprite_images.items():
+            # sort sprite images by key
+
+            for index, image in sorted(self.sprite_images.items(), key=lambda x: x[0]):
                 im_view = DragSpriteView(self, image, index, self.curr_animation.sprites)
                 im_view.mouseReleaseEvent = lambda e, i=index: self.__add_sprite_to_frame_part(i)
 
