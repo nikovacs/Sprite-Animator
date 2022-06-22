@@ -223,21 +223,24 @@ class Animator_GUI(Ui_MainWindow):
 
     def __do_loop_checkbox_changed_event(self) -> None:
         if self.curr_animation:
-            self.curr_animation.singledir = self.singledir_checkbox.isChecked()
+            self.curr_animation.is_loop = self.loop_checkbox.isChecked()
             if self.loop_checkbox.isChecked():
                 self.continuous_checkbox.setChecked(False)
-                self.curr_animation.continuous = False
+                self.curr_animation.is_continuous = False
             
     def __do_continuous_checkbox_changed_event(self) -> None:
         if self.curr_animation:
-            self.curr_animation.continuous = self.continuous_checkbox.isChecked()
+            self.curr_animation.is_continuous = self.continuous_checkbox.isChecked()
             if self.continuous_checkbox.isChecked():
                 self.loop_checkbox.setChecked(False)
-                self.curr_animation.loop = False
+                self.curr_animation.is_loop = False
 
     def __do_singledir_checkbox_changed_event(self) -> None:
         if self.curr_animation:
-            self.curr_animation.singledir = self.singledir_checkbox.isChecked()
+            self.curr_animation.toggle_single_dir()
+            self.__play = False
+            self.curr_frame = 0
+            self.__display_current_frame()
 
     def __set_frame_length(self, length: int or float) -> None:
         if self.curr_animation:
@@ -348,6 +351,18 @@ class Animator_GUI(Ui_MainWindow):
         if event.key() == QtCore.Qt.Key_Delete:
             self.__delete_curr_sprite()
             return
+        if event.key() == QtCore.Qt.Key_PageUp:
+            self.set_curr_sprite(self.curr_sprite + 1)
+            return
+        if event.key() == QtCore.Qt.Key_PageDown:
+            self.set_curr_sprite(self.curr_sprite - 1)
+            return
+        if event.key() == QtCore.Qt.Key_Space:
+            if self.play: 
+                self.play = False
+            else:
+                self.__play_animation()
+
         direction = None
         amount = None
         if event.key() == QtCore.Qt.Key_Left:
@@ -391,9 +406,12 @@ class Animator_GUI(Ui_MainWindow):
         self.length_textbox.setText(str(self.get_current_frame().length))
 
     def __correct_current_sprite(self):
+        """
+        # curr_sprite must be something like -1, so we should convert it to the correct index for display
+        """
         if self.curr_sprite is None: self.curr_sprite = -1 if self.__sprites_exist() else None
         if not 0 <= self.curr_sprite < len(self.get_current_frame_part().list_of_sprites):
-            # curr_sprite must be something like -1, so we should convert it to the correct index for display
+
             if self.curr_sprite < 0:
                 self.curr_sprite = len(self.get_current_frame_part().list_of_sprites) + self.curr_sprite
 
@@ -523,7 +541,13 @@ class Animator_GUI(Ui_MainWindow):
             self.enable_disable_buttons(True)
             self.__set_frame_slider_max()
             self.__set_animation_textboxes()
+            self.__set_animation_checkboxes()
             self.__load_sfx_from_ani()
+
+    def __set_animation_checkboxes(self) -> None:
+        self.loop_checkbox.setChecked(self.curr_animation.is_loop)
+        self.singledir_checkbox.setChecked(self.curr_animation.is_single_dir)
+        self.continuous_checkbox.setChecked(self.curr_animation.is_continuous)
 
     def __set_animation_textboxes(self) -> None:
         if self.curr_animation:

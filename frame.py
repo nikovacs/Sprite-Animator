@@ -37,6 +37,10 @@ class Frame:
     def set_length(self, length: float) -> None:
         self.__length = length if length >= 0.05 else 0.05
 
+    def set_frame_parts(self, frame_parts: dict) -> None:
+        if isinstance(frame_parts, dict) and len(frame_parts) == 4 and set(frame_parts.keys()) == {"up", "left", "down", "right"}:
+            self.__frame_parts = frame_parts
+
 
 class FramePart:
     """
