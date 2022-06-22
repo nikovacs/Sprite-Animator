@@ -176,6 +176,8 @@ class Animator_GUI(Ui_MainWindow):
         pygame.init()
         pygame.mixer.init()
 
+        self.play = False
+        self.__play_thread = None
         self.curr_dir = "down"
         self.curr_animation = None
         self.curr_frame = 0
@@ -183,8 +185,6 @@ class Animator_GUI(Ui_MainWindow):
         # acts as an index in an iterable. Ex. -1 can mean upper-most layer
         self.sprite_images = {}  # index: QPixmap
         self.__sfx_dict = {}  # file: pygame.mixer.Sound object
-        self.play = False
-        self.__play_thread = None
         self.__clipboard = None
         self.time_label.setText("0.00")
 
@@ -421,8 +421,6 @@ class Animator_GUI(Ui_MainWindow):
         self.__display_current_frame()
 
     def __display_current_frame(self) -> None:
-        if len(self.sprite_images) == 0:
-            self.__load_sprites_from_ani()
         if self.curr_animation:
             if self.get_current_frame().sfx != "" and self.get_current_frame().sfx not in self.__sfx_dict:
                 self.__load_sfx_from_ani()
@@ -449,22 +447,16 @@ class Animator_GUI(Ui_MainWindow):
     def __load_sfx_from_ani(self) -> None:
         if self.curr_animation:
             for sfx in (sfxs := [frame.sfx for frame in self.curr_animation.frames if frame.sfx]):
-                print(sfx)
                 if sfx and sfx not in self.__sfx_dict.keys():
-                    print("adding sfx to dict")
                     sfx_path = self.__find_file(sfx)
                     self.__sfx_dict[sfx] = pygame.mixer.Sound(sfx_path) if sfx_path else None
-
-            print(self.__sfx_dict)
-
             # remove any old sfxs from the dictionary
             for sfx in self.__sfx_dict.keys():
                 if sfx not in sfxs:
-                    print("removing olf sfx from dict")
                     del self.__sfx_dict[sfx]
 
     def __load_sprites_from_ani(self):
-        if self.curr_animation:
+        if self.curr_animation and len(self.curr_animation.sprites) > 0:
             with TemporaryDirectory() as tempdir:
                 for sprite in self.curr_animation.sprites:
                     image_path = self.__find_file(sprite.image)
@@ -526,23 +518,25 @@ class Animator_GUI(Ui_MainWindow):
                 self.configs[key] = val.strip()
 
     def __new_animation(self, from_file=False) -> None:
-        self.__init_configs_variables()
         if from_file:
             # display a QFileDialog to get the file name
             file = self.__get_gani_file()
             if file.endswith(".gani"):
+                self.__init_configs_variables()
                 self.curr_animation = Animation(from_file=file)
         else:
+            self.__init_configs_variables()
             self.curr_animation = Animation()
 
         if self.curr_animation:
-            self.__display_current_frame()
-            self.__init_scroll_area()
+            self.__load_sprites_from_ani()
             self.enable_disable_buttons(True)
             self.__set_frame_slider_max()
             self.__set_animation_textboxes()
             self.__set_animation_checkboxes()
             self.__load_sfx_from_ani()
+            self.__init_scroll_area()
+            self.__display_current_frame()
 
     def __set_animation_checkboxes(self) -> None:
         self.loop_checkbox.setChecked(self.curr_animation.is_loop)
