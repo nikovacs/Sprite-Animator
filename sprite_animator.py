@@ -77,7 +77,7 @@ class Animator_GUI(Ui_MainWindow):
         # link select_sprite_textbox and combobox
         self.selected_sprite_text.setValidator(QtGui.QIntValidator(-100000, 100000))
         self.selected_sprite_text.returnPressed.connect(lambda: self.set_curr_sprite(int(self.selected_sprite_text.text())))
-        self.__sprite_combo_listen = False # important because we do not always want to listen when the combo box changes (it changes every time we update the current sprite / move a sprite (even if it does not look like it))
+        self.__listen = False  # while loading the gani, some events are triggered, but we do not want to listen to them yet.
         self.selected_sprite_combo.currentIndexChanged.connect(self.__do_sprite_combo_changed_event)
 
         # link length textbox
@@ -193,11 +193,12 @@ class Animator_GUI(Ui_MainWindow):
         return len(self.curr_animation.frames)
 
     def __do_frame_slider_changed_event(self) -> None:
-        self.curr_frame = self.frame_slider.value()
-        timer_val = sum([self.curr_animation.frames[i].length for i in range(self.curr_frame + 1)])
-        self.time_label.setText(f"{timer_val:.2f}")
-        self.curr_frame = self.frame_slider.value()
-        self.__display_current_frame()
+        if self.__listen:
+            self.curr_frame = self.frame_slider.value()
+            timer_val = sum([self.curr_animation.frames[i].length for i in range(self.curr_frame + 1)])
+            self.time_label.setText(f"{timer_val:.2f}")
+            self.curr_frame = self.frame_slider.value()
+            self.__display_current_frame()
 
     def __set_frame_slider(self) -> None:
         if self.__ani_length-1 != self.frame_slider.maximum():
@@ -222,21 +223,21 @@ class Animator_GUI(Ui_MainWindow):
         self.__play_thread.finished.connect(lambda: overwrite_thread(self))
 
     def __do_loop_checkbox_changed_event(self) -> None:
-        if self.curr_animation:
+        if self.curr_animation and self.__listen:
             self.curr_animation.is_loop = self.loop_checkbox.isChecked()
             if self.loop_checkbox.isChecked():
                 self.continuous_checkbox.setChecked(False)
                 self.curr_animation.is_continuous = False
             
     def __do_continuous_checkbox_changed_event(self) -> None:
-        if self.curr_animation:
+        if self.curr_animation and self.__listen:
             self.curr_animation.is_continuous = self.continuous_checkbox.isChecked()
             if self.continuous_checkbox.isChecked():
                 self.loop_checkbox.setChecked(False)
                 self.curr_animation.is_loop = False
 
     def __do_singledir_checkbox_changed_event(self) -> None:
-        if self.curr_animation:
+        if self.curr_animation and self.__listen:
             self.curr_animation.toggle_single_dir()
             self.__play = False
             self.curr_frame = 0
@@ -247,7 +248,7 @@ class Animator_GUI(Ui_MainWindow):
             self.get_current_frame().set_length(length)
 
     def __do_sprite_combo_changed_event(self):
-        if self.__sprite_combo_listen:
+        if self.__listen:
             self.set_curr_sprite(self.selected_sprite_combo.currentIndex())
             self.__update_sprite_textboxes()
 
@@ -394,7 +395,7 @@ class Animator_GUI(Ui_MainWindow):
 
     def __update_sprite_textboxes(self) -> None:
         if not self.__sprites_exist(): return
-        self.__sprite_combo_listen = False
+        self.__listen = False
         self.__correct_current_sprite()
         self.x_textbox.setText(f"{self.get_current_frame_part().list_of_sprites[self.curr_sprite][1]:.2f}")  # TODO consider making these named tuples to avoid indexing
         self.y_textbox.setText(f"{self.get_current_frame_part().list_of_sprites[self.curr_sprite][2]:.2f}")
@@ -402,7 +403,7 @@ class Animator_GUI(Ui_MainWindow):
         self.selected_sprite_combo.clear()
         self.selected_sprite_combo.addItems([f"{i}: {sprite.desc}" for i, (sprite, _, _) in enumerate(self.get_current_frame_part().list_of_sprites)])
         self.selected_sprite_combo.setCurrentIndex(self.curr_sprite)
-        self.__sprite_combo_listen = True
+        self.__listen = True
         self.length_textbox.setText(str(self.get_current_frame().length))
 
     def __correct_current_sprite(self):
