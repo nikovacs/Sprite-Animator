@@ -136,11 +136,21 @@ class Animation:
         """
         @param line: a list containing the contents for a frame part
         """
+        self.__frames.append(Frame())
         for i in range(0, len(line), 3):
             sprite_index, x, y = line[i:i+3]
-            frame_part = self.__frames[-1].frame_parts["up"]  # TODO fix
-            frame_part.add_sprite_xs_ys((sprite_index, x, y))
-        self.__record_ani = False
+            if y[-1] == ',': y = y[:-1]  # drop comma
+            frame = self.__frames[-1]
+            frame_part = frame.frame_parts["up"]  # TODO fix
+            sprite = [sprite for sprite in self.__sprites_list if sprite.index == int(sprite_index)][0]
+            frame_part.add_sprite_xs_ys((sprite, int(x), int(y)))
+            frame.set_frame_parts({
+                "up": frame_part,
+                "left": frame_part,
+                "down": frame_part,
+                "right": frame_part,
+            })
+            
 
     def __generate_frames(self, line: list) -> None:
         """
@@ -203,3 +213,40 @@ class Animation:
     
     def set_setbackto(self, setbackto: str) -> None:
         self.__setbackto = setbackto
+
+    def toggle_single_dir(self) -> None:
+        def i_plus_one(i):
+            return i+1 if i+1 < len(self.__frames) else i
+        # up, down, left, right
+        if self.is_single_dir:
+            new_frames = []
+            print(len(self.frames))
+            for i in range(0, len(self.frames), 4): 
+                new_frame = copy.deepcopy(self.frames[i])
+                new_frame.set_frame_parts({
+                    # does not matter which direction we grab because they should all be pointing to the same frame.
+                    "up": copy.deepcopy(self.frames[i].frame_parts["up"]), 
+                    "left": copy.deepcopy(self.frames[i_plus_one(i)].frame_parts["left"]), 
+                    "down": copy.deepcopy(self.frames[i_plus_one(i_plus_one(i))].frame_parts["down"]), 
+                    "right": copy.deepcopy(self.frames[i_plus_one(i_plus_one(i_plus_one(i)))].frame_parts["right"])
+                })
+                new_frames.append(new_frame)
+            self.__frames = new_frames
+        else:
+            new_frames = []
+            for frame in self.frames:
+                for key in ("up", "left", "down", "right"):
+                    frame_part = frame.frame_parts[key]
+                    new_frame = copy.deepcopy(frame)
+                    new_frame.set_frame_parts({
+                        "up": frame_part,
+                        "down": frame_part,
+                        "left": frame_part,
+                        "right": frame_part
+                    })
+                    new_frames.append(new_frame)
+            self.__frames = new_frames
+        self.is_single_dir = not self.is_single_dir
+        
+
+                
