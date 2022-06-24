@@ -11,6 +11,7 @@ from draggable import DragImage, DragSpriteView
 from new_sprite_ui import Ui_Dialog as NewSpriteDialog
 from scene import AniGraphicsView
 from ui import Ui_MainWindow
+from NewSpriteDialog import NewSpriteDialog
 import pygame
 
 
@@ -18,6 +19,7 @@ class Animator_GUI(Ui_MainWindow):
     def __init__(self, MainWindow) -> None:
         super().__init__()
         super().setupUi(MainWindow)
+        self.MainWindow = MainWindow
         self.__init_graphics_view()
 
         self.__init_configs_variables()
@@ -410,9 +412,12 @@ class Animator_GUI(Ui_MainWindow):
         """
         # curr_sprite must be something like -1, so we should convert it to the correct index for display
         """
-        if self.curr_sprite is None: self.curr_sprite = -1 if self.__sprites_exist() else None
-        if not 0 <= self.curr_sprite < len(self.get_current_frame_part().list_of_sprites):
+        if self.curr_sprite is None and self.__sprites_exist(): 
+            self.curr_sprite = -1 
+        else: 
+            return
 
+        if not 0 <= self.curr_sprite < len(self.get_current_frame_part().list_of_sprites):
             if self.curr_sprite < 0:
                 self.curr_sprite = len(self.get_current_frame_part().list_of_sprites) + self.curr_sprite
 
@@ -443,13 +448,13 @@ class Animator_GUI(Ui_MainWindow):
         attr = attr.upper()
         sprites = [sprite for sprite in self.curr_animation.sprites if sprite.image == attr]
         with TemporaryDirectory() as temp_dir:
-            for sprite in sprites: self.__load_and_crop_sprite(self.__find_file(sprite.image), sprite, temp_dir)
+            for sprite in sprites: self.__load_and_crop_sprite(self.find_file(sprite.image), sprite, temp_dir)
 
     def __load_sfx_from_ani(self) -> None:
         if self.curr_animation:
             for sfx in (sfxs := [frame.sfx for frame in self.curr_animation.frames if frame.sfx]):
                 if sfx and sfx not in self.__sfx_dict.keys():
-                    sfx_path = self.__find_file(sfx)
+                    sfx_path = self.find_file(sfx)
                     self.__sfx_dict[sfx] = pygame.mixer.Sound(sfx_path) if sfx_path else None
             # remove any old sfxs from the dictionary
             for sfx in self.__sfx_dict.keys():
@@ -460,7 +465,7 @@ class Animator_GUI(Ui_MainWindow):
         if self.curr_animation and len(self.curr_animation.sprites) > 0:
             with TemporaryDirectory() as tempdir:
                 for sprite in self.curr_animation.sprites:
-                    image_path = self.__find_file(sprite.image)
+                    image_path = self.find_file(sprite.image)
                     if image_path:
                         self.__load_and_crop_sprite(image_path, sprite, tempdir)
                     else:
@@ -482,7 +487,7 @@ class Animator_GUI(Ui_MainWindow):
         else:
             self.__make_default_sprite_img(sprite)
 
-    def __find_file(self, file_name):
+    def find_file(self, file_name):
         # TODO if GameFolder in config does not exist, prompt user to enter their game folder path
         for root, dirs, files in os.walk(r"C:\Users\kovac\Graal"):  # TODO TEMP HARD CODED TO MY GAME FOLDER, USE GLOB FOR FASTER LOADING
             for file in files:
@@ -490,27 +495,27 @@ class Animator_GUI(Ui_MainWindow):
                     return os.path.join(root, file)
         file_name = file_name.upper()
         if file_name == "SPRITES":
-            return self.__find_file("sprites.png")
+            return self.find_file("sprites.png")
         elif file_name == "SHIELD":
-            return self.__find_file(self.curr_animation.attrs['shield'])
+            return self.find_file(self.curr_animation.attrs['shield'])
         elif file_name == "BODY":
-            return self.__find_file(self.curr_animation.attrs['body'])
+            return self.find_file(self.curr_animation.attrs['body'])
         elif file_name == "HEAD":
-            return self.__find_file(self.curr_animation.attrs['head'])
+            return self.find_file(self.curr_animation.attrs['head'])
         elif file_name == "ATTR1":
-            return self.__find_file(self.curr_animation.attrs['attr1'])
+            return self.find_file(self.curr_animation.attrs['attr1'])
         elif file_name == "ATTR2":
-            return self.__find_file(self.curr_animation.attrs['attr2'])
+            return self.find_file(self.curr_animation.attrs['attr2'])
         elif file_name == "ATTR3":
-            return self.__find_file(self.curr_animation.attrs['attr3'])
+            return self.find_file(self.curr_animation.attrs['attr3'])
         elif file_name == "ATTR12":
-            return self.__find_file(self.curr_animation.attrs['attr12'])
+            return self.find_file(self.curr_animation.attrs['attr12'])
         elif file_name == "PARAM1":
-            return self.__find_file(self.curr_animation.attrs['param1'])
+            return self.find_file(self.curr_animation.attrs['param1'])
         elif file_name == "PARAM2":
-            return self.__find_file(self.curr_animation.attrs['param2'])
+            return self.find_file(self.curr_animation.attrs['param2'])
         elif file_name == "PARAM3":
-            return self.__find_file(self.curr_animation.attrs['param3'])
+            return self.find_file(self.curr_animation.attrs['param3'])
 
     def __load_configs(self) -> None:
         with open("./config.txt", "r") as f:
@@ -523,9 +528,11 @@ class Animator_GUI(Ui_MainWindow):
             # display a QFileDialog to get the file name
             file = self.__get_gani_file()
             if file.endswith(".gani"):
+                self.curr_file = file
                 self.__init_configs_variables()
                 self.curr_animation = Animation(from_file=file)
         else:
+            self.curr_file = ""
             self.__init_configs_variables()
             self.curr_animation = Animation()
 
@@ -636,8 +643,8 @@ class Animator_GUI(Ui_MainWindow):
         """
         if self.curr_animation:
             new_sprite_window = QtWidgets.QDialog()
-            new_sprite_ui = NewSpriteDialog()
-            new_sprite_ui.setupUi(new_sprite_window)
+            new_sprite_ui = NewSpriteDialog(new_sprite_window)
+            new_sprite_window.setStyleSheet(self.MainWindow.styleSheet())
             new_sprite_window.exec_()
 
             # new_sprite_window.new_sprite_image_combobox
