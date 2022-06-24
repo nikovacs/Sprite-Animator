@@ -247,6 +247,12 @@ class Animation:
                     new_frames.append(new_frame)
             self.__frames = new_frames
         self.is_single_dir = not self.is_single_dir
+
+    def reverse_frames(self) -> None:
+        """
+        Reverses the frames in the animation
+        """
+        self.__frames = self.__frames[::-1]
         
 
                 
