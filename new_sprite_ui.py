@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '.\new_sprite_ui.ui'
+# Form implementation generated from reading ui file 'new_sprite_ui.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.6
 #
@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(708, 543)
+        Dialog.resize(708, 597)
         self.gridLayout = QtWidgets.QGridLayout(Dialog)
         self.gridLayout.setObjectName("gridLayout")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
@@ -220,16 +220,20 @@ class Ui_Dialog(object):
         self.horizontalLayout_6.setStretch(0, 1)
         self.horizontalLayout_6.setStretch(1, 2)
         self.verticalLayout_2.addLayout(self.horizontalLayout_6)
-        self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
-        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
-        self.buttonBox.setObjectName("buttonBox")
-        self.verticalLayout_2.addWidget(self.buttonBox)
+        self.horizontalLayout_14 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_14.setObjectName("horizontalLayout_14")
+        spacerItem6 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_14.addItem(spacerItem6)
+        self.add_and_close_btn = QtWidgets.QPushButton(Dialog)
+        self.add_and_close_btn.setObjectName("add_and_close_btn")
+        self.horizontalLayout_14.addWidget(self.add_and_close_btn)
+        self.add_and_continue_btn = QtWidgets.QPushButton(Dialog)
+        self.add_and_continue_btn.setObjectName("add_and_continue_btn")
+        self.horizontalLayout_14.addWidget(self.add_and_continue_btn)
+        self.verticalLayout_2.addLayout(self.horizontalLayout_14)
         self.gridLayout.addLayout(self.verticalLayout_2, 0, 0, 1, 1)
 
         self.retranslateUi(Dialog)
-        self.buttonBox.accepted.connect(Dialog.accept) # type: ignore
-        self.buttonBox.rejected.connect(Dialog.reject) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
@@ -261,3 +265,5 @@ class Ui_Dialog(object):
         self.label_13.setText(_translate("Dialog", "StretchX"))
         self.label_14.setText(_translate("Dialog", "StretchY"))
         self.label_15.setText(_translate("Dialog", "Common"))
+        self.add_and_close_btn.setText(_translate("Dialog", "Add and Close"))
+        self.add_and_continue_btn.setText(_translate("Dialog", "Add and Continue"))
