@@ -101,13 +101,13 @@ class Animation:
                 elif line[0].upper() == "SETBACKTO":
                     self.__setbackto = line[1] if len(line) > 1 else ""
                 elif line[0].upper() == "DEFAULTATTR1":
-                    self.__attrs["attr1"] = line[1] if len(line) > 1 else ""
+                    self.__attrs["attr1"] = line[1] if len(line) > 1 else "hat0.png"
                 elif line[0].lower() == "DEFAULTHEAD":
-                    self.__attrs["head"] = line[1] if len(line) > 1 else ""
+                    self.__attrs["head"] = line[1] if len(line) > 1 else "head19.png"
                 elif line[0].lower() == "DEFAULTBODY":
-                    self.__attrs["body"] = line[1] if len(line) > 1 else ""
+                    self.__attrs["body"] = line[1] if len(line) > 1 else "body.png"
                 elif line[0].lower() == "DEFAULTSHIELD":
-                    self.__attrs["shield"] = line[1] if len(line) > 1 else ""
+                    self.__attrs["shield"] = line[1] if len(line) > 1 else "shield1.png"
                 elif line[0].upper() == "ANI":
                     self.__record_ani = True
                     self.__ani_dir = 0
@@ -129,6 +129,8 @@ class Animation:
                     self.__generate_frames(line)
                 elif self.__record_ani and self.is_single_dir:
                     self.__generate_frames_for_single_dir(line)
+                elif record_script:
+                    self.__script.append(line)
                 elif self.__is_line_valid_sprite(line):
                     self.__interpret_sprite_line(line[1:])
 
@@ -142,7 +144,11 @@ class Animation:
             if y[-1] == ',': y = y[:-1]  # drop comma
             frame = self.__frames[-1]
             frame_part = frame.frame_parts["up"]  # TODO fix
-            sprite = [sprite for sprite in self.__sprites_list if sprite.index == int(sprite_index)][0]
+            sprite = None
+            for tmp_sprite in self.__sprites_list:
+                if tmp_sprite.index == int(sprite_index):
+                    sprite = tmp_sprite
+            if not sprite: continue
             frame_part.add_sprite_xs_ys((sprite, int(x), int(y)))
             frame.set_frame_parts({
                 "up": frame_part,
@@ -151,7 +157,6 @@ class Animation:
                 "right": frame_part,
             })
             
-
     def __generate_frames(self, line: list) -> None:
         """
         @param line: a list containing the contents for a frame part
@@ -253,6 +258,55 @@ class Animation:
         Reverses the frames in the animation
         """
         self.__frames = self.__frames[::-1]
-        
 
-                
+    def save(self, file_name: str) -> None:
+        """
+        @param file_name: The name of the file to be saved
+        """
+        # with open(file_name, "w") as f:
+        #     f.write(self.to_string())
+        print(self.to_string())
+        
+    def to_string(self) -> str:
+        """
+        @return the string representation of the animation
+        """
+        string = ""
+        string += "Animator by PK Vici\n"
+        for sprite in self.__sprites_list:
+            string += sprite.to_string() + "\n"
+        string += "\n"
+
+        # TODO rotate effects here
+        if self.__setbackto:
+            string += f"SETBACKTO {self.__setbackto}\n"
+
+        if self.is_loop: string += "LOOP\n"
+        if self.is_continuous: string += "CONTINUOUS\n"
+        if self.is_single_dir: string += "SINGLEDIRECTION\n"
+
+        for attr, value in self.__attrs.items():
+            string += f"DEFAULT{attr.upper()} {value}\n" if value else ""
+
+        # TODO color effects here
+
+        if len(self.__script) > 0:
+            string += "SCRIPT\n"
+            for line in self.__script:
+                string += line + "\n"
+            string += "SCRIPTEND\n"
+
+        string += "\n"
+
+        string += "ANI\n"
+        for frame in self.__frames:
+            for frame_part in frame.frame_parts.values():
+                string += frame_part.to_string() + "\n"
+                if self.is_single_dir:
+                    break
+            string += f"PLAYSOUND {frame.sfx}" if frame.sfx else ""
+            string += f"WAIT {int((frame.length / 0.05)-1)}\n" if frame.length > 0.05 else "\n"
+            string += "\n"
+        string = string[:-1]
+        string += "ANIEND\n"
+        return string
