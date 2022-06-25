@@ -140,3 +140,12 @@ class FramePart:
         """
         self.list_of_sprites_xs_ys.pop(layer)
 
+    def to_string(self) -> str:
+        """
+        Returns a string representation of the frame part
+        """
+        out = ""
+        for sprite, x, y in self.list_of_sprites_xs_ys:
+            out += f"\t{sprite.index}\t{x}\t{y},"
+        return out[:-1]
+
