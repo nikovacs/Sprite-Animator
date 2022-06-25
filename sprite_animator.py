@@ -406,7 +406,7 @@ class Animator_GUI(Ui_MainWindow):
         self.selected_sprite_combo.addItems([f"{i}: {sprite.desc}" for i, (sprite, _, _) in enumerate(self.get_current_frame_part().list_of_sprites)])
         self.selected_sprite_combo.setCurrentIndex(self.curr_sprite)
         self.__listen = True
-        self.length_textbox.setText(str(self.get_current_frame().length))
+        self.length_textbox.setText(f"{self.get_current_frame().length:.2f}")
 
     def __correct_current_sprite(self):
         """
@@ -631,7 +631,7 @@ class Animator_GUI(Ui_MainWindow):
 
     def __save_animation(self) -> None:
         if self.curr_animation:
-            pass # TODO
+            self.curr_animation.save(self.curr_file)
 
     def __change_dir(self) -> None:
         self.curr_dir = self.dir_combo_box.currentText().lower()
