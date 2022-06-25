@@ -263,9 +263,8 @@ class Animation:
         """
         @param file_name: The name of the file to be saved
         """
-        # with open(file_name, "w") as f:
-        #     f.write(self.to_string())
-        print(self.to_string())
+        with open(file_name, "w") as f:
+            f.write(self.to_string())
         
     def to_string(self) -> str:
         """
