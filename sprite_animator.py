@@ -631,7 +631,10 @@ class Animator_GUI(Ui_MainWindow):
 
     def __save_animation(self) -> None:
         if self.curr_animation:
-            self.curr_animation.save(self.curr_file)
+            if self.curr_file:
+                self.curr_animation.save(self.curr_file)
+            else:
+                self.__save_animation_as()
 
     def __change_dir(self) -> None:
         self.curr_dir = self.dir_combo_box.currentText().lower()
