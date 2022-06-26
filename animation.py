@@ -1,6 +1,7 @@
 from frame import Frame
 from sprite import Sprite
 import copy
+import math
 
 class Animation:
     """
@@ -10,15 +11,12 @@ class Animation:
     def __init__(self, from_file=None) -> None:
         self.__script = []
         self.__color_effects = []
-        self.__rotate_effects = []
-        self.__stretch_effects = []
+        self.__rotate_effects = [] # ex. [index: int, angle: float (in degrees)]
+        self.__stretch_x_effects = [] # ex. 
+        self.__stretch_y_effects = []
         self.__frames = []
         self.__sprites_list = []
 
-        # initialize these attributes to False.
-        # Empty ani defaults these to False and 
-        # loading from an existing ani will 
-        # overwrite them if needed
         self.is_loop = False
         self.is_continuous = False
         self.is_single_dir = False
@@ -122,7 +120,8 @@ class Animation:
                 elif line[0].upper() == "COLOREFFECT":
                     self.__color_effects.append(line[1:]  if len(line) > 1 else "")
                 elif line[0].upper() == "ROTATEEFFECT":
-                    self.__rotate_effects.append(line[1:] if len(line) > 1 else "")
+                    if len(line) == 3:
+                        self.__rotate_effects.append([int(line[1]), self.radians_to_degrees(float(line[2]))])
                 elif line[0].upper() == "STRETCHEFFECT":
                     self.__stretch_effects.append(line[1:] if len(line) > 1 else "")
                 elif self.__record_ani and not self.is_single_dir:
@@ -133,6 +132,14 @@ class Animation:
                     self.__script.append(line)
                 elif self.__is_line_valid_sprite(line):
                     self.__interpret_sprite_line(line[1:])
+
+        if self.__rotate_effects:
+            self.__apply_rotate_effects()
+
+    def __apply_rotate_effects(self):
+        for sprite in self.sprites:
+            if sprite.index in [x[0] for x in self.__rotate_effects]:
+                sprite.rotation = [x[1] for x in self.__rotate_effects if x[0] == sprite.index][0]
 
     def __generate_frames_for_single_dir(self, line: list) -> None:
         """
@@ -168,7 +175,11 @@ class Animation:
             sprite_index, x, y = line[i:i+3]
             if y[-1] == ',': y = y[:-1]  # drop comma
             frame_part = self.__frames[-1].frame_parts[(num_dir_map[self.__ani_dir])]
-            sprite = [sprite for sprite in self.__sprites_list if sprite.index == int(sprite_index)][0]
+            sprite = None
+            for tmp_sprite in self.__sprites_list:
+                if tmp_sprite.index == int(sprite_index):
+                    sprite = tmp_sprite
+            if not sprite: continue
             frame_part.add_sprite_xs_ys((sprite, int(x), int(y)))
         self.__ani_dir = self.__ani_dir + 1 if self.__ani_dir < 3 else 0
 
@@ -258,6 +269,12 @@ class Animation:
         Reverses the frames in the animation
         """
         self.__frames = self.__frames[::-1]
+
+    def radians_to_degrees(self, radians: float) -> float:
+        return radians * 180 / math.pi
+
+    def degrees_to_radians(self, degrees: float) -> float:
+        return degrees * math.pi / 180
 
     def save(self, file_name: str) -> None:
         """
