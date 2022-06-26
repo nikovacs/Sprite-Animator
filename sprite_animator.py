@@ -484,7 +484,8 @@ class Animator_GUI(Ui_MainWindow):
             # TODO add stretch effects color effects.
             image.save(os.path.join(tempdir, f"{sprite.index}.png"))
             pixmap = QtGui.QPixmap(os.path.join(tempdir, f"{sprite.index}.png"))
-            pixmap = self.rotate_pixmap(sprite, pixmap)
+            if sprite.rotation != 0:
+                pixmap = self.rotate_pixmap(sprite, pixmap)
             self.sprite_images[sprite.index] = pixmap
         else:
             self.__make_default_sprite_img(sprite)
@@ -500,13 +501,15 @@ class Animator_GUI(Ui_MainWindow):
             painter.translate(-pixmap.width() / 2, -pixmap.height() / 2)
             painter.drawPixmap(0, 0, pixmap)
             painter.end()
-            return new_pixmap.transformed(QtGui.QTransform().translate(wh, wh).translate(-pixmap.width() / 2, -pixmap.height() / 2))
+            new_pixmap.transformed(QtGui.QTransform().translate(wh, wh).translate(-pixmap.width() / 2, -pixmap.height() / 2))
+            return new_pixmap
 
     def find_file(self, file_name):
         # TODO if GameFolder in config does not exist, prompt user to enter their game folder path
-        for root, dirs, files in os.walk(r"C:\Users\kovac\Graal"):  # TODO TEMP HARD CODED TO MY GAME FOLDER, USE GLOB FOR FASTER LOADING
+        for root, dirs, files in os.walk(r"C:\Users\kovac\Graal"):  # TODO TEMP HARD CODED TO MY GAME FOLDER
             for file in files:
                 if file.split(".")[0].lower() == file_name or file.lower() == file_name:
+                    print(f"Found {file_name} at {os.path.join(root, file)}")
                     return os.path.join(root, file)
         file_name = file_name.upper()
         if file_name == "SPRITES":
@@ -586,9 +589,9 @@ class Animator_GUI(Ui_MainWindow):
         if self.curr_animation:
             self.sprite_scroll_area.setWidget(QtWidgets.QWidget())
             self.sprite_scroll_area.widget().setLayout(QtWidgets.QVBoxLayout())
-            # sort sprite images by key
 
             for index, image in sorted(self.sprite_images.items(), key=lambda x: x[0]):
+                print(index, image)
                 im_view = DragSpriteView(self, image, index, self.curr_animation.sprites)
                 im_view.mouseReleaseEvent = lambda e, i=index: self.__add_sprite_to_frame_part(i)
 
@@ -665,7 +668,7 @@ class Animator_GUI(Ui_MainWindow):
         """
         if self.curr_animation:
             new_sprite_window = QtWidgets.QDialog()
-            new_sprite_ui = NewSpriteDialog(new_sprite_window)
+            new_sprite_ui = NewSpriteDialog(self, new_sprite_window)
             new_sprite_window.setStyleSheet(self.MainWindow.styleSheet())
             new_sprite_window.exec_()
 
