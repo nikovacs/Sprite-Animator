@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(708, 597)
+        Dialog.resize(708, 599)
         self.gridLayout = QtWidgets.QGridLayout(Dialog)
         self.gridLayout.setObjectName("gridLayout")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
@@ -206,6 +206,7 @@ class Ui_Dialog(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.preview.sizePolicy().hasHeightForWidth())
         self.preview.setSizePolicy(sizePolicy)
+        self.preview.setMinimumSize(QtCore.QSize(225, 192))
         self.preview.setObjectName("preview")
         self.verticalLayout.addWidget(self.preview)
         self.verticalLayout.setStretch(1, 2)
