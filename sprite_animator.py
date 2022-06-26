@@ -338,7 +338,7 @@ class Animator_GUI(Ui_MainWindow):
     # setup scroll wheel events for the graphics view
     def __do_wheel_event(self, event):
         if event.angleDelta().y() > 0:
-            if self.__graphics_view.transform().m11() < 5: self.__graphics_view.scale(1.1, 1.1)
+            if self.__graphics_view.transform().m11() < 15: self.__graphics_view.scale(1.1, 1.1)
         else:
             if self.__graphics_view.transform().m11() > 0.75: self.__graphics_view.scale(1 / 1.1, 1 / 1.1)
         event.accept()
@@ -481,11 +481,26 @@ class Animator_GUI(Ui_MainWindow):
         if image_path:
             image = Image.open(image_path)
             image = image.crop((sprite.x, sprite.y, sprite.x + sprite.width, sprite.y + sprite.height))
-            # TODO add stretch effects, rotation effects, color effects.
+            # TODO add stretch effects color effects.
             image.save(os.path.join(tempdir, f"{sprite.index}.png"))
-            self.sprite_images[sprite.index] = QtGui.QPixmap(os.path.join(tempdir, f"{sprite.index}.png"))
+            pixmap = QtGui.QPixmap(os.path.join(tempdir, f"{sprite.index}.png"))
+            pixmap = self.rotate_pixmap(sprite, pixmap)
+            self.sprite_images[sprite.index] = pixmap
         else:
             self.__make_default_sprite_img(sprite)
+
+    def rotate_pixmap(self, sprite, pixmap):
+        if sprite.rotation != 0:
+            wh = max(pixmap.width(), pixmap.height())
+            new_pixmap = QtGui.QPixmap(wh, wh)
+            new_pixmap.fill(QtCore.Qt.transparent)
+            painter = QtGui.QPainter(new_pixmap)
+            painter.translate(pixmap.width() / 2, pixmap.height() / 2)
+            painter.rotate(sprite.rotation)
+            painter.translate(-pixmap.width() / 2, -pixmap.height() / 2)
+            painter.drawPixmap(0, 0, pixmap)
+            painter.end()
+            return new_pixmap.transformed(QtGui.QTransform().translate(wh, wh).translate(-pixmap.width() / 2, -pixmap.height() / 2))
 
     def find_file(self, file_name):
         # TODO if GameFolder in config does not exist, prompt user to enter their game folder path
@@ -586,7 +601,11 @@ class Animator_GUI(Ui_MainWindow):
             viewPoint = self.__graphics_view.mapFromGlobal(QtGui.QCursor.pos())
             scenePoint = self.__graphics_view.mapToScene(viewPoint)
 
-            sprite_to_add = [sprite for sprite in self.curr_animation.sprites if sprite.index == index][0]
+            sprite_to_add = None
+            for sprite in self.curr_animation.sprites:
+                if sprite.index == index:
+                    sprite_to_add = sprite
+                    break
 
             # add sprite to the current frame part
             sprite_tuple = (sprite_to_add, round(scenePoint.x() - (sprite_to_add.width / 2)),
