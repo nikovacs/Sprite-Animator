@@ -1,6 +1,5 @@
 import math
 import sys
-import time
 from PyQt5 import QtWidgets, QtCore, QtGui, QtWidgets
 from pygame import Rect
 from new_sprite_ui import Ui_Dialog as NewSpriteUI
