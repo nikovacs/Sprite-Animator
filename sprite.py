@@ -5,7 +5,7 @@ class Sprite:
         self.y = int(y)
         self.width = int(width)
         self.height = int(height)
-        self.rotation = int(rotation)
+        self.rotation = float(rotation)
         self.index = int(sprite_index)
         self.desc = description
     
