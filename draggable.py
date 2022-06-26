@@ -20,6 +20,7 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
         self.setPos(x, y)
         self.setAcceptHoverEvents(True)
         self.x, self.y = x, y
+        self.__set_curr_sprite()
 
     def hoverEnterEvent(self, event):
         self.setCursor(QtCore.Qt.OpenHandCursor)
@@ -65,12 +66,17 @@ class DragSpriteView(QtWidgets.QGraphicsView):
         self.parent = parent
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-
+        self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
         self.setScene(QtWidgets.QGraphicsScene())
         self.scene().addPixmap(image)
-        self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
 
-        self.setToolTip(f"Sprite({index}) " + [sprite.desc for sprite in all_sprites if sprite.index == index][0])
+        self.sprite = None
+        for sprite in all_sprites:
+            if sprite.index == index:
+                self.sprite = sprite
+                break
+
+        self.setToolTip(f"Sprite({index}) " + sprite.desc)
         parent.sprite_scroll_area.widget().layout().addWidget(self)
 
     def enterEvent(self, event):
