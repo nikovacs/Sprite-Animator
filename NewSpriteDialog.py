@@ -1,8 +1,10 @@
 import math
 import sys
+import time
+
 from PyQt5 import QtWidgets, QtCore, QtGui, QtWidgets
-from pygame import Rect
 from new_sprite_ui import Ui_Dialog as NewSpriteUI
+from sprite import Sprite
 import numpy as np
 
 class NewSpriteDialog(NewSpriteUI):
@@ -187,20 +189,60 @@ class NewSpriteDialog(NewSpriteUI):
         self.width_textbox.setText(str(self.w))
         self.height_textbox.setText(str(self.h))
 
-    def rotate_pixmap(cls, sprite, pixmap):
+    """
+    static methods
+    """
+    @staticmethod
+    def pad_pixmap(pixmap: QtGui.QPixmap, padding_x: int, padding_y: int) -> QtGui.QPixmap:
+        """
+        returns a pixmap with padding around it
+        """
+        new_width, new_height = pixmap.width() + padding_x * 2, pixmap.height() + padding_y * 2
+        new_pixmap = QtGui.QPixmap(new_width, new_height)
+        new_pixmap.fill(QtCore.Qt.transparent)
+        painter = QtGui.QPainter(new_pixmap)
+        painter.drawPixmap(padding_x, padding_y, pixmap)
+        painter.end()
+        return new_pixmap
+
+    @staticmethod
+    def rotate_pixmap(sprite, pixmap):
         if sprite.rotation != 0:
             wh = max(pixmap.width(), pixmap.height())
+            x_diff, y_diff = abs(pixmap.width() - wh) / 2, abs(pixmap.height() - wh) / 2
+            NewSpriteDialog.pad_pixmap(pixmap, abs(pixmap.width() - wh) / 2, abs(pixmap.height() - wh) / 2)
             new_pixmap = QtGui.QPixmap(wh, wh)
             new_pixmap.fill(QtCore.Qt.transparent)
             painter = QtGui.QPainter(new_pixmap)
             painter.translate(pixmap.width() / 2, pixmap.height() / 2)
             painter.rotate(sprite.rotation)
             painter.translate(-pixmap.width() / 2, -pixmap.height() / 2)
-            painter.drawPixmap(0, 0, pixmap)
+            painter.drawPixmap(x_diff, y_diff, pixmap.width(), pixmap.height(), pixmap)
             painter.end()
-            new_pixmap.transformed(QtGui.QTransform().translate(wh, wh).translate(-pixmap.width() / 2, -pixmap.height() / 2))
-            return new_pixmap
+            new_pixmap.save(f"{sprite.desc}rotated.png")
+            return new_pixmap#.transformed(QtGui.QTransform().translate(wh / 2, wh / 2).translate(-pixmap.width() / 2, -pixmap.height() / 2))
         else:
             return pixmap
 
-    def stretch_pixmap(cls, direction, sprite, pixmap):
+    @staticmethod
+    def stretch_pixmap(sprite: Sprite, pixmap: QtGui.QPixmap):
+        """
+        stretches a pixmap in the appropriate direction by the corresponding factor
+        @param sprite: the sprite object
+        @param pixmap: the pixmap to stretch
+        @return: the stretched pixmap, but with maintained 0, 0
+        """
+        if sprite.stretch_x != 1 or sprite.stretch_y != 1:
+            wh = max(pixmap.width(), pixmap.height()) * max(abs(sprite.stretch_x), abs(sprite.stretch_y))
+            new_pixmap = QtGui.QPixmap(wh, wh)
+            new_pixmap.fill(QtCore.Qt.transparent)
+            painter = QtGui.QPainter(new_pixmap)
+            painter.translate(pixmap.width() / 2, pixmap.height() / 2)
+            painter.scale(sprite.stretch_x, sprite.stretch_y)
+            painter.translate(-pixmap.width() / 2, -pixmap.height() / 2)
+            painter.drawPixmap(0, 0, pixmap)      
+            painter.end()
+            return new_pixmap.transformed(QtGui.QTransform().translate(wh / 2, wh / 2).translate(-pixmap.width() / 2, -pixmap.height() / 2))
+        else:
+            return pixmap
+        
