@@ -7,6 +7,7 @@ from PIL import Image
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from animation import Animation
+from sprite import Sprite
 from draggable import DragImage, DragSpriteView
 from new_sprite_ui import Ui_Dialog as NewSpriteDialog
 from scene import AniGraphicsView
@@ -23,6 +24,7 @@ class Animator_GUI(Ui_MainWindow):
         self.__init_graphics_view()
 
         self.__init_configs_variables()
+        self.__image_path_map = {} # not in init method because I want it to persist as long as the program is open
 
         btns = self.enable_disable_buttons(False)
 
@@ -186,6 +188,7 @@ class Animator_GUI(Ui_MainWindow):
         self.curr_sprite = None  # int (layer in the current frame part) a.k.a. index in the FramePart list
         # acts as an index in an iterable. Ex. -1 can mean upper-most layer
         self.sprite_images = {}  # index: QPixmap
+        self.sprite_offsets = {}  # index: (x_offset, y_offset) for adjusted sprite images which are no longer their original sizes
         self.__sfx_dict = {}  # file: pygame.mixer.Sound object
         self.__clipboard = None
         self.time_label.setText("0.00")
@@ -395,7 +398,7 @@ class Animator_GUI(Ui_MainWindow):
     def __sprites_exist(self) -> bool:
         return len(self.get_current_frame_part().list_of_sprites) > 0
 
-    def __update_sprite_textboxes(self) -> None:
+    def  __update_sprite_textboxes(self) -> None:
         if not self.__sprites_exist(): return
         self.__listen = False
         self.__correct_current_sprite()
@@ -434,7 +437,10 @@ class Animator_GUI(Ui_MainWindow):
             self.__correct_current_sprite()
             self.__prepare_graphics_view()
             for i, (sprite, x, y) in enumerate(self.get_current_frame_part().list_of_sprites):
-                self.__graphics_view.scene.addItem(DragImage(self, sprite, i, x, y))
+                offsets = self.sprite_offsets.get(sprite.index)
+                if offsets:
+                    x_offset, y_offset = offsets
+                self.__graphics_view.scene.addItem(DragImage(self, sprite, i, x, y, x_offset, y_offset))
             self.__update_sprite_textboxes()
             self.__set_frame_slider()
             self.__update_sfx_textbox()
@@ -483,11 +489,24 @@ class Animator_GUI(Ui_MainWindow):
             image = image.crop((sprite.x, sprite.y, sprite.x + sprite.width, sprite.y + sprite.height))
             # TODO add stretch effects color effects.
             image.save(os.path.join(tempdir, f"{sprite.index}.png"))
-            pixmap = QtGui.QPixmap(os.path.join(tempdir, f"{sprite.index}.png"))
-            pixmap = NewSpriteDialog.rotate_pixmap(sprite, pixmap)
+            original_pixmap = QtGui.QPixmap(os.path.join(tempdir, f"{sprite.index}.png"))
+            pixmap = NewSpriteDialog.rotate_pixmap(sprite, original_pixmap)
+            pixmap = NewSpriteDialog.stretch_pixmap(sprite, pixmap)
             self.sprite_images[sprite.index] = pixmap
+            self.__generate_offsets(sprite, original_pixmap, pixmap)
         else:
             self.__make_default_sprite_img(sprite)
+
+    def __generate_offsets(self, sprite: Sprite, original_pixmap: QtGui.QPixmap, pixmap: QtGui.QPixmap) -> None:
+        """
+        This method is called after modifying the sprite pixmap...
+        Such as, rotating, zooming, stretching, or anything else that changes the size of the pixmap.
+        @param sprite: Sprite object of the corresponding pixmap. Needed for its attributes (specifically index).
+        @param original_pixmap: The original pixmap before any modifications.
+        @param pixmap: The pixmap after modifications.
+        """
+        self.sprite_offsets[sprite.index] = (abs(original_pixmap.width() / 2 - pixmap.width() / 2),
+                                             abs(original_pixmap.height() / 2 - pixmap.height() / 2))
 
     def find_file(self, file_name):
         # TODO if GameFolder in config does not exist, prompt user to enter their game folder path
@@ -576,7 +595,6 @@ class Animator_GUI(Ui_MainWindow):
             self.sprite_scroll_area.widget().setLayout(QtWidgets.QVBoxLayout())
 
             for index, image in sorted(self.sprite_images.items(), key=lambda x: x[0]):
-                print(index, image)
                 im_view = DragSpriteView(self, image, index, self.curr_animation.sprites)
                 im_view.mouseReleaseEvent = lambda e, i=index: self.__add_sprite_to_frame_part(i)
 
