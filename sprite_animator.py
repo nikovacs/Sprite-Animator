@@ -484,25 +484,10 @@ class Animator_GUI(Ui_MainWindow):
             # TODO add stretch effects color effects.
             image.save(os.path.join(tempdir, f"{sprite.index}.png"))
             pixmap = QtGui.QPixmap(os.path.join(tempdir, f"{sprite.index}.png"))
-            if sprite.rotation != 0:
-                pixmap = self.rotate_pixmap(sprite, pixmap)
+            pixmap = NewSpriteDialog.rotate_pixmap(sprite, pixmap)
             self.sprite_images[sprite.index] = pixmap
         else:
             self.__make_default_sprite_img(sprite)
-
-    def rotate_pixmap(self, sprite, pixmap):
-        if sprite.rotation != 0:
-            wh = max(pixmap.width(), pixmap.height())
-            new_pixmap = QtGui.QPixmap(wh, wh)
-            new_pixmap.fill(QtCore.Qt.transparent)
-            painter = QtGui.QPainter(new_pixmap)
-            painter.translate(pixmap.width() / 2, pixmap.height() / 2)
-            painter.rotate(sprite.rotation)
-            painter.translate(-pixmap.width() / 2, -pixmap.height() / 2)
-            painter.drawPixmap(0, 0, pixmap)
-            painter.end()
-            new_pixmap.transformed(QtGui.QTransform().translate(wh, wh).translate(-pixmap.width() / 2, -pixmap.height() / 2))
-            return new_pixmap
 
     def find_file(self, file_name):
         # TODO if GameFolder in config does not exist, prompt user to enter their game folder path

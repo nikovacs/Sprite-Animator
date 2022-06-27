@@ -61,7 +61,6 @@ class NewSpriteDialog(NewSpriteUI):
             print("transparent pixel")
             return
         
-        print("clicked on pixel:", x, y)
         self.__sprite_finder(x, y, np_image, np_pixels_checked)
 
         self.x = self.min_x
@@ -147,7 +146,6 @@ class NewSpriteDialog(NewSpriteUI):
     def __update_preview(self) -> None:
         self.preview.scene().clear()
         if self.pixmap and self.x is not None and self.y is not None and self.w and self.h:
-            print("updating preview")
             self.preview.scene().addPixmap(self.pixmap.copy(self.x, self.y, self.w, self.h))
             self.preview.fitInView(self.preview.scene().itemsBoundingRect(), QtCore.Qt.KeepAspectRatio)
             
@@ -158,11 +156,9 @@ class NewSpriteDialog(NewSpriteUI):
         self.slicer.fitInView(self.slicer.scene().itemsBoundingRect(), QtCore.Qt.KeepAspectRatio)
 
     def update_desc(self) -> None:
-        print("updating desc")
         self.desc = self.desc_textbox.text()
 
     def update_index(self) -> None:
-        print("updating index")
         self.index = int(self.sprite_index_textbox.text()) if self.sprite_index_textbox.text() != "-" else self.index
 
     def update_x(self, e) -> None:
@@ -191,3 +187,20 @@ class NewSpriteDialog(NewSpriteUI):
         self.width_textbox.setText(str(self.w))
         self.height_textbox.setText(str(self.h))
 
+    def rotate_pixmap(cls, sprite, pixmap):
+        if sprite.rotation != 0:
+            wh = max(pixmap.width(), pixmap.height())
+            new_pixmap = QtGui.QPixmap(wh, wh)
+            new_pixmap.fill(QtCore.Qt.transparent)
+            painter = QtGui.QPainter(new_pixmap)
+            painter.translate(pixmap.width() / 2, pixmap.height() / 2)
+            painter.rotate(sprite.rotation)
+            painter.translate(-pixmap.width() / 2, -pixmap.height() / 2)
+            painter.drawPixmap(0, 0, pixmap)
+            painter.end()
+            new_pixmap.transformed(QtGui.QTransform().translate(wh, wh).translate(-pixmap.width() / 2, -pixmap.height() / 2))
+            return new_pixmap
+        else:
+            return pixmap
+
+    def stretch_pixmap(cls, direction, sprite, pixmap):
