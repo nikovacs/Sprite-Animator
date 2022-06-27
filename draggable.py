@@ -5,7 +5,7 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
     """
     Subclass of QGraphicsPixMapItem to allow for dragging of sprites on the canvas
     """
-    def __init__(self, parent, sprite, layer_index, x=0, y=0):
+    def __init__(self, parent, sprite, layer_index, x=0, y=0, x_offset=0, y_offset=0):
         """
         @param parent: The parent widget of the sprite. Pass in self as arg when instantiating most of the time
         @param sprite: The Sprite Object that is being drawn
@@ -17,10 +17,28 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
         self.parent = parent
         self.sprite = sprite
         self.layer_index = layer_index
-        self.setPos(x, y)
         self.setAcceptHoverEvents(True)
-        self.x, self.y = x, y
+        self.__x, self.__y = x, y
+        self.__x_offset = x_offset
+        self.__y_offset = y_offset
         self.__set_curr_sprite()
+        self.__set_pos()
+
+    @property
+    def x(self):
+        return self.__x
+
+    @property
+    def y(self):
+        return self.__y
+
+    @property
+    def real_x(self):
+        return self.x - self.__x_offset
+
+    @property
+    def real_y(self):
+        return self.y - self.__y_offset
 
     def hoverEnterEvent(self, event):
         self.setCursor(QtCore.Qt.OpenHandCursor)
@@ -37,24 +55,28 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
         orig_pos = event.lastScenePos()
         updated_pos = event.scenePos()
         new_pos = self.pos() + updated_pos - orig_pos
-        self.setPos(new_pos)
+        self.__x, self.__y = round(new_pos.x()), round(new_pos.y())
+        self.__set_pos()
 
     def mouseReleaseEvent(self, event):
-        old_x, old_y = self.x, self.y
+        old_x, old_y = self.__x, self.__y
         self.setCursor(QtCore.Qt.OpenHandCursor)
-        self.x, self.y = round(self.pos().x()), round(self.pos().y())
-        self.setPos(self.x, self.y)
+        self.__x, self.__y = round(self.pos().x()), round(self.pos().y())
+        self.__set_pos()
         self.__set_new_sprite_pos(old_x, old_y)
 
     def __set_new_sprite_pos(self, old_x: int, old_y: int) -> None:
-        x_diff, y_diff = self.x - old_x, self.y - old_y
+        x_diff, y_diff = self.__x - old_x, self.__y - old_y
         if x_diff != 0:
             self.parent.shift_sprite("horizontal", x_diff)
         if y_diff != 0:
             self.parent.shift_sprite("vertical", y_diff)
 
-    def __set_curr_sprite(self):
+    def __set_curr_sprite(self) -> None:
         self.parent.set_curr_sprite(self.layer_index)
+
+    def __set_pos(self) -> None:
+        self.setPos(self.real_x, self.real_y)
 
 
 class DragSpriteView(QtWidgets.QGraphicsView):
