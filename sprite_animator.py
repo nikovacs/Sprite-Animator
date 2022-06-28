@@ -187,6 +187,7 @@ class Animator_GUI(Ui_MainWindow):
         self.__sfx_dict = {}  # file: pygame.mixer.Sound object
         self.__clipboard = None
         self.time_label.setText("0.00")
+        self.__listen = False
 
     @property
     def __ani_length(self) -> int:
@@ -559,6 +560,7 @@ class Animator_GUI(Ui_MainWindow):
             self.__init_scroll_area()
             self.__display_current_frame()
             self.dir_combo_box.setCurrentIndex(2)
+            self.__listen = True
 
     def __set_animation_checkboxes(self) -> None:
         self.loop_checkbox.setChecked(self.curr_animation.is_loop)
