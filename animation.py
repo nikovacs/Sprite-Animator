@@ -122,8 +122,10 @@ class Animation:
                 elif line[0].upper() == "ROTATEEFFECT":
                     if len(line) == 3:
                         self.__rotate_effects.append([int(line[1]), self.radians_to_degrees(float(line[2]))])
-                elif line[0].upper() == "STRETCHEFFECT":
-                    self.__stretch_effects.append(line[1:] if len(line) > 1 else "")
+                elif line[0].upper() == "STRETCHXEFFECT":
+                    self.__stretch_x_effects.append(line[1:] if len(line) > 1 else "")
+                elif line[0].upper() == "STRETCHYEFFECT":
+                    self.__stretch_y_effects.append(line[1:] if len(line) > 1 else "")
                 elif self.__record_ani and not self.is_single_dir:
                     self.__generate_frames(line)
                 elif self.__record_ani and self.is_single_dir:
