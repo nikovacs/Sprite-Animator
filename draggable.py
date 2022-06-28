@@ -58,7 +58,6 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
         self.__set_pos()
 
     def mouseReleaseEvent(self, event):
-        old_x, old_y = self.__x, self.__y
         self.setCursor(QtCore.Qt.OpenHandCursor)
         self.__x, self.__y = round(self.pos().x()), round(self.pos().y())
         self.__set_pos()
