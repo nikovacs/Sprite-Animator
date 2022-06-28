@@ -123,11 +123,11 @@ class Animation:
                     if len(line) == 3:
                         self.__rotate_effects[int(line[1])] = Animation.radians_to_degrees(float(line[2]))
                 elif line[0].upper() == "STRETCHXEFFECT":
-                    self.__stretch_x_effects[line[1]] = line[2:] if len(line) > 1 else ""
+                    self.__stretch_x_effects[int(line[1])] = line[2:] if len(line) > 1 else ""
                 elif line[0].upper() == "STRETCHYEFFECT":
-                    self.__stretch_y_effects[line[1]] = line[2:] if len(line) > 1 else ""
+                    self.__stretch_y_effects[int(line[1])] = line[2:] if len(line) > 1 else ""
                 elif line[0].upper() == "COLOREFFECT":
-                    self.__color_effects[line[1]] = line[2:]
+                    self.__color_effects[int(line[1])] = line[2:]
                 elif self.__record_ani and not self.is_single_dir:
                     self.__generate_frames(line)
                 elif self.__record_ani and self.is_single_dir:
@@ -139,11 +139,27 @@ class Animation:
 
         if self.__rotate_effects:
             self.__apply_rotate_effects()
+        if self.__stretch_x_effects or self.__stretch_y_effects:
+            self.__apply_stretch_effects()
+        if self.__color_effects:
+            self.__apply_color_effects()
 
-    def __apply_rotate_effects(self):
+    def __apply_stretch_effects(self) -> None:
         for sprite in self.sprites:
-            if sprite.index in [x[0] for x in self.__rotate_effects]:
-                sprite.rotation = [x[1] for x in self.__rotate_effects if x[0] == sprite.index][0]
+            if sprite.index in self.__stretch_x_effects.keys():
+                sprite.stretch_x = self.__stretch_x_effects[sprite.index]
+            if sprite.index in self.__stretch_y_effects.keys():
+                sprite.stretch_y = self.__stretch_y_effects[sprite.index]
+
+    def __apply_color_effects(self) -> None:
+        for sprite in self.sprites:
+            if sprite.index in self.__color_effects.keys():
+                sprite.color_effects = self.__color_effects[sprite.index]
+
+    def __apply_rotate_effects(self) -> None:
+        for sprite in self.sprites:
+            if sprite.index in self.__rotate_effects.keys():
+                sprite.rotation = self.__rotate_effects[sprite.index]
 
     def __generate_frames_for_single_dir(self, line: list) -> None:
         """
