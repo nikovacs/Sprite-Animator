@@ -399,8 +399,8 @@ class Animator_GUI(Ui_MainWindow):
         if not self.__sprites_exist(): return
         self.__listen = False
         self.__correct_current_sprite()
-        self.x_textbox.setText(f"{self.get_current_frame_part().list_of_sprites[self.curr_sprite][1]:.2f}")  # TODO consider making these named tuples to avoid indexing
-        self.y_textbox.setText(f"{self.get_current_frame_part().list_of_sprites[self.curr_sprite][2]:.2f}")
+        self.x_textbox.setText(str(self.get_current_frame_part().list_of_sprites[self.curr_sprite][1]))  # TODO consider making these named tuples to avoid indexing
+        self.y_textbox.setText(str(self.get_current_frame_part().list_of_sprites[self.curr_sprite][2]))
         self.selected_sprite_text.setText(str(self.curr_sprite))
         self.selected_sprite_combo.clear()
         self.selected_sprite_combo.addItems([f"{i}: {sprite.desc}" for i, (sprite, _, _) in enumerate(self.get_current_frame_part().list_of_sprites)])
