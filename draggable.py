@@ -21,7 +21,6 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
         self.__x, self.__y = x, y
         self.__x_offset = x_offset
         self.__y_offset = y_offset
-        self.__set_curr_sprite()
         self.__set_pos()
 
     @property
