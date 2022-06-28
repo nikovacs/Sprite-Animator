@@ -62,7 +62,7 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
         self.setCursor(QtCore.Qt.OpenHandCursor)
         self.__x, self.__y = round(self.pos().x()), round(self.pos().y())
         self.__set_pos()
-        self.__set_new_sprite_pos(old_x, old_y)
+        self.__set_new_sprite_pos(self.__x, self.__y)
 
     def __set_new_sprite_pos(self, old_x: int, old_y: int) -> None:
         x_diff, y_diff = self.__x - old_x, self.__y - old_y
