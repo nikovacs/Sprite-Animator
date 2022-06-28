@@ -19,6 +19,7 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
         self.layer_index = layer_index
         self.setAcceptHoverEvents(True)
         self.__x, self.__y = x, y
+        self.__old_x, self.__old_y = x, y
         self.__x_offset = x_offset
         self.__y_offset = y_offset
         self.__set_pos()
@@ -46,6 +47,7 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
         self.setCursor(QtCore.Qt.ArrowCursor)
 
     def mousePressEvent(self, event):
+        self.__old_x, self.__old_y = self.__x, self.__y
         self.setCursor(QtCore.Qt.ClosedHandCursor)
         self.__set_curr_sprite()
 
@@ -61,10 +63,11 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
         self.setCursor(QtCore.Qt.OpenHandCursor)
         self.__x, self.__y = round(self.pos().x()), round(self.pos().y())
         self.__set_pos()
-        self.__set_new_sprite_pos(self.__x, self.__y)
+        self.__set_new_sprite_pos(self.__old_x, self.__old_y)
 
     def __set_new_sprite_pos(self, old_x: int, old_y: int) -> None:
         x_diff, y_diff = self.__x - old_x, self.__y - old_y
+        print(f"x_diff: {x_diff}, y_diff: {y_diff}")
         if x_diff != 0:
             self.parent.shift_sprite("horizontal", x_diff)
         if y_diff != 0:
