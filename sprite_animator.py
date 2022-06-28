@@ -23,7 +23,7 @@ class Animator_GUI(Ui_MainWindow):
         self.MainWindow = MainWindow
         self.__init_graphics_view()
 
-        self.__init_configs_variables()
+        self.__init_vars()
         self.__image_path_map = {} # not in init method because I want it to persist as long as the program is open
 
         btns = self.enable_disable_buttons(False)
@@ -169,11 +169,6 @@ class Animator_GUI(Ui_MainWindow):
             if not num_frames - 1 > self.curr_frame:
                 self.curr_frame -= 1
             self.__display_current_frame()
-
-    def __init_configs_variables(self):
-        self.configs = {}
-        self.__load_configs()
-        self.__init_vars()
 
     def __init_vars(self):
         # pygame being used for playing .wav files
@@ -439,8 +434,7 @@ class Animator_GUI(Ui_MainWindow):
             self.__prepare_graphics_view()
             for i, (sprite, x, y) in enumerate(self.get_current_frame_part().list_of_sprites):
                 offsets = self.sprite_offsets.get(sprite.index)
-                if offsets:
-                    x_offset, y_offset = offsets
+                x_offset, y_offset = offsets if offsets else (0, 0)
                 self.__graphics_view.scene.addItem(DragImage(self, sprite, i, x, y, x_offset, y_offset))
             self.__update_sprite_textboxes()
             self.__set_frame_slider()
@@ -511,12 +505,14 @@ class Animator_GUI(Ui_MainWindow):
                                              abs(original_pixmap.height() / 2 - pixmap.height() / 2))
 
     def find_file(self, file_name):
-        # TODO if GameFolder in config does not exist, prompt user to enter their game folder path
-        for root, dirs, files in os.walk(r"C:\Users\kovac\Graal"):  # TODO TEMP HARD CODED TO MY GAME FOLDER
+        if file_name in self.__image_path_map:
+            return self.__image_path_map[file_name]
+        for root, dirs, files in os.walk(r"C:\Users\kovac\Graal"):  # TODO TEMP HARD CODED TO MY GAME FOLDER, CHANGE TO "."
             for file in files:
                 if file.split(".")[0].lower() == file_name or file.lower() == file_name:
+                    self.__image_path_map[file_name] = os.path.join(root, file)
                     return os.path.join(root, file)
-        file_name = file_name.upper()
+        file_name = file_name.upper()  # TODO: make these already be in self.__image_path_map from start.
         if file_name == "SPRITES":
             return self.find_file("sprites.png")
         elif file_name == "SHIELD":
@@ -540,23 +536,17 @@ class Animator_GUI(Ui_MainWindow):
         elif file_name == "PARAM3":
             return self.find_file(self.curr_animation.attrs['param3'])
 
-    def __load_configs(self) -> None:
-        with open("./config.txt", "r") as f:
-            for line in f:
-                key, val = line.split("=")
-                self.configs[key] = val.strip()
-
     def __new_animation(self, from_file=False) -> None:
         if from_file:
             # display a QFileDialog to get the file name
             file = self.__get_gani_file()
             if file.endswith(".gani"):
                 self.curr_file = file
-                self.__init_configs_variables()
+                self.__init_vars()
                 self.curr_animation = Animation(from_file=file)
         else:
             self.curr_file = ""
-            self.__init_configs_variables()
+            self.__init_vars()
             self.curr_animation = Animation()
 
         if self.curr_animation:
@@ -568,6 +558,7 @@ class Animator_GUI(Ui_MainWindow):
             self.__load_sfx_from_ani()
             self.__init_scroll_area()
             self.__display_current_frame()
+            self.dir_combo_box.setCurrentIndex(2)
 
     def __set_animation_checkboxes(self) -> None:
         self.loop_checkbox.setChecked(self.curr_animation.is_loop)
