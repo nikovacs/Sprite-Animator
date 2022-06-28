@@ -493,6 +493,7 @@ class Animator_GUI(Ui_MainWindow):
             original_pixmap = QtGui.QPixmap(os.path.join(tempdir, f"{sprite.index}.png"))
             pixmap = NewSpriteDialog.rotate_pixmap(sprite, original_pixmap)
             pixmap = NewSpriteDialog.stretch_pixmap(sprite, pixmap)
+            pixmap = NewSpriteDialog.add_color_effects_to_pixmap(sprite, pixmap)
             self.sprite_images[sprite.index] = pixmap
             self.__generate_offsets(sprite, original_pixmap, pixmap)
         else:
@@ -514,7 +515,6 @@ class Animator_GUI(Ui_MainWindow):
         for root, dirs, files in os.walk(r"C:\Users\kovac\Graal"):  # TODO TEMP HARD CODED TO MY GAME FOLDER
             for file in files:
                 if file.split(".")[0].lower() == file_name or file.lower() == file_name:
-                    print(f"Found {file_name} at {os.path.join(root, file)}")
                     return os.path.join(root, file)
         file_name = file_name.upper()
         if file_name == "SPRITES":
