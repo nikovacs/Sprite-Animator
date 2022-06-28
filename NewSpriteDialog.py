@@ -54,7 +54,7 @@ class NewSpriteDialog(NewSpriteUI):
         @param point: (x, y) based on where user clicked on the preview.
         """
         x, y = point
-        np_image = self.__pixmap_to_numpy() 
+        np_image = NewSpriteDialog.__pixmap_to_numpy(self.pixmap)
         np_pixels_checked = np.zeros(np_image.shape[:-1], dtype=np.uint8)
         self.min_x, self.max_x = None, None
         self.min_y, self.max_y = None, None
@@ -91,16 +91,28 @@ class NewSpriteDialog(NewSpriteUI):
             if self.max_y is None or y > self.max_y: self.max_y = y
             if self.min_y is None or y < self.min_y: self.min_y = y
             self.__sprite_finder(x, y, image, pixels_checked)
-            
-    def __pixmap_to_numpy(self):
+    @staticmethod
+    def __pixmap_to_numpy(pixmap: QtGui.QPixmap) -> np.ndarray:
         """
-        returns a numpy array of the pixmap in BGRA (don't ask me why) format, all that matters is that the last value is alpha.
+        returns a numpy array of the pixmap in RGBA format.
+        All that matters is that the alpha is the fourth value.
+        @param pixmap: QtGui.QPixmap to be turned into a numpy array
+        @return: numpy array of the pixmap in RGBA format. (shape: (height, width, 4))
         """
         channels_count = 4
-        image = self.pixmap.toImage()
-        s = image.bits().asstring(self.pixmap.width() * self.pixmap.height() * channels_count)
-        arr = np.fromstring(s, dtype=np.uint8).reshape((self.pixmap.height(), self.pixmap.width(), channels_count))
+        image = pixmap.toImage()
+        s = image.bits().asstring(pixmap.width() * pixmap.height() * channels_count)
+        arr = np.fromstring(s, dtype=np.uint8).reshape((pixmap.height(), pixmap.width(), channels_count))
         return arr
+
+    @staticmethod
+    def __numpy_to_pixmap(np_image: np.ndarray) -> QtGui.QPixmap:
+        """
+        returns a QPixmap from a numpy array.
+        """
+        image = QtGui.QImage(np_image.data, np_image.shape[1], np_image.shape[0], QtGui.QImage.Format_RGBA8888)
+        pixmap = QtGui.QPixmap.fromImage(image)
+        return pixmap
 
     def __init_vars(self):
         self.image_file = ""
@@ -252,5 +264,16 @@ class NewSpriteDialog(NewSpriteUI):
             return pixmap
 
     @staticmethod
-    def color_effects(sprite: Sprite, pixmap: QtGui.QPixmap):
-        pass
+    def add_color_effects_to_pixmap(sprite: Sprite, pixmap: QtGui.QPixmap):
+        if sprite.color_effect != [1, 1, 1, 1]:
+            blue, green, red, alpha = sprite.color_effect
+            np_pixmap = NewSpriteDialog.__pixmap_to_numpy(pixmap)  # remember! in BGRA format
+            np_pixmap[:, :, 0] = np_pixmap[:, :, 0] * blue
+            np_pixmap[:, :, 1] = np_pixmap[:, :, 1] * green
+            np_pixmap[:, :, 2] = np_pixmap[:, :, 2] * red
+            np_pixmap[:, :, 3] = np_pixmap[:, :, 3] * alpha
+            return NewSpriteDialog.__numpy_to_pixmap(np_pixmap)
+        else:
+            return pixmap
+
+
