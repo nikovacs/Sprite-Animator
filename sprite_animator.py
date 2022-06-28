@@ -354,7 +354,7 @@ class Animator_GUI(Ui_MainWindow):
 
     def key_press_event(self, event) -> None:
         if not self.__sprites_exist(): return
-        if event.key() == QtCore.Qt.Key_Delete:
+        if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
             self.__delete_curr_sprite()
             return
         if event.key() == QtCore.Qt.Key_PageUp:
@@ -368,6 +368,7 @@ class Animator_GUI(Ui_MainWindow):
                 self.play = False
             else:
                 self.__play_animation()
+            return
 
         direction = None
         amount = None
