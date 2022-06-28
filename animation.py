@@ -11,9 +11,9 @@ class Animation:
     def __init__(self, from_file=None) -> None:
         self.__script = []
         self.__rotate_effects = {} # ex. [index: int, angle: float (in degrees)]
-        self.__stretch_x_effects = {}
+        self.__stretch_x_effects = {}  # ex. {index: int, stretch: float}
         self.__stretch_y_effects = {}
-        self.__color_effects = {}
+        self.__color_effects = {}  # ex. {index: int, [R,G,B,A]}
         self.__frames = []
         self.__sprites_list = []
 
@@ -117,17 +117,15 @@ class Animation:
                     self.is_continuous = True
                 elif line[0].upper() == "LOOP":
                     self.is_loop = True
-                elif line[0].upper() == "COLOREFFECT":
-                    self.__color_effects[line[1]] = line[2:]
                 elif line[0].upper() == "ROTATEEFFECT":
-                    if len(line) == 3:
-                        self.__rotate_effects[int(line[1])] = Animation.radians_to_degrees(float(line[2]))
+                    self.__rotate_effects[int(line[1])] = Animation.radians_to_degrees(float(line[2]))
                 elif line[0].upper() == "STRETCHXEFFECT":
-                    self.__stretch_x_effects[int(line[1])] = line[2:] if len(line) > 1 else ""
+                    self.__stretch_x_effects[int(line[1])] = float(line[2]) if len(line) > 1 else 1
                 elif line[0].upper() == "STRETCHYEFFECT":
-                    self.__stretch_y_effects[int(line[1])] = line[2:] if len(line) > 1 else ""
+                    self.__stretch_y_effects[int(line[1])] = float(line[2]) if len(line) > 1 else 1
                 elif line[0].upper() == "COLOREFFECT":
-                    self.__color_effects[int(line[1])] = line[2:]
+                    print("COLOR EFFECT")
+                    self.__color_effects[int(line[1])] = [float(x) for x in line[2:]]
                 elif line[0].upper() == "ZOOMEFFECT":
                     pass
                 elif self.__record_ani and not self.is_single_dir:
@@ -139,11 +137,11 @@ class Animation:
                 elif self.__is_line_valid_sprite(line):
                     self.__interpret_sprite_line(line[1:])
 
-        if self.__rotate_effects:
+        if len(self.__rotate_effects) > 0:
             self.__apply_rotate_effects()
-        if self.__stretch_x_effects or self.__stretch_y_effects:
+        if len(self.__stretch_x_effects) > 0 or len(self.__stretch_y_effects) > 0:
             self.__apply_stretch_effects()
-        if self.__color_effects:
+        if len(self.__color_effects) > 0:
             self.__apply_color_effects()
 
     def __apply_stretch_effects(self) -> None:
@@ -156,7 +154,7 @@ class Animation:
     def __apply_color_effects(self) -> None:
         for sprite in self.sprites:
             if sprite.index in self.__color_effects.keys():
-                sprite.color_effects = self.__color_effects[sprite.index]
+                sprite.color_effect = self.__color_effects[sprite.index]
 
     def __apply_rotate_effects(self) -> None:
         for sprite in self.sprites:
