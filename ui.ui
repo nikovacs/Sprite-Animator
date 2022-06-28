@@ -222,7 +222,7 @@
                  <widget class="QPushButton" name="plus_x_btn">
                   <property name="minimumSize">
                    <size>
-                    <width>25</width>
+                    <width>50</width>
                     <height>0</height>
                    </size>
                   </property>
@@ -233,7 +233,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>+X</string>
+                   <string>  +X  </string>
                   </property>
                  </widget>
                 </item>
@@ -241,7 +241,7 @@
                  <widget class="QPushButton" name="minus_x_btn">
                   <property name="minimumSize">
                    <size>
-                    <width>25</width>
+                    <width>50</width>
                     <height>0</height>
                    </size>
                   </property>
@@ -252,7 +252,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>-X</string>
+                   <string>  -X  </string>
                   </property>
                  </widget>
                 </item>
@@ -260,7 +260,7 @@
                  <widget class="QPushButton" name="plus_y_btn">
                   <property name="minimumSize">
                    <size>
-                    <width>25</width>
+                    <width>50</width>
                     <height>0</height>
                    </size>
                   </property>
@@ -271,7 +271,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>+Y</string>
+                   <string>  +Y  </string>
                   </property>
                  </widget>
                 </item>
@@ -279,7 +279,7 @@
                  <widget class="QPushButton" name="minus_y_btn">
                   <property name="minimumSize">
                    <size>
-                    <width>25</width>
+                    <width>50</width>
                     <height>0</height>
                    </size>
                   </property>
@@ -290,7 +290,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>-Y</string>
+                   <string>  -Y  </string>
                   </property>
                  </widget>
                 </item>
