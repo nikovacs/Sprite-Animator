@@ -54,7 +54,7 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
         orig_pos = event.lastScenePos()
         updated_pos = event.scenePos()
         new_pos = self.pos() + updated_pos - orig_pos
-        self.__x, self.__y = round(new_pos.x()), round(new_pos.y())
+        self.__x, self.__y = new_pos.x(), new_pos.y()
         self.__set_pos()
 
     def mouseReleaseEvent(self, event):
