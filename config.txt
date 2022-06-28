@@ -1,1 +1,0 @@
-GameFolder=C:/Users/kovac/Graal
