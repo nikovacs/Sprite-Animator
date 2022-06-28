@@ -10,10 +10,10 @@ class Animation:
     """
     def __init__(self, from_file=None) -> None:
         self.__script = []
-        self.__color_effects = []
-        self.__rotate_effects = [] # ex. [index: int, angle: float (in degrees)]
-        self.__stretch_x_effects = [] # ex. 
-        self.__stretch_y_effects = []
+        self.__rotate_effects = {} # ex. [index: int, angle: float (in degrees)]
+        self.__stretch_x_effects = {}
+        self.__stretch_y_effects = {}
+        self.__color_effects = {}
         self.__frames = []
         self.__sprites_list = []
 
@@ -118,14 +118,16 @@ class Animation:
                 elif line[0].upper() == "LOOP":
                     self.is_loop = True
                 elif line[0].upper() == "COLOREFFECT":
-                    self.__color_effects.append(line[1:]  if len(line) > 1 else "")
+                    self.__color_effects[line[1]] = line[2:]
                 elif line[0].upper() == "ROTATEEFFECT":
                     if len(line) == 3:
-                        self.__rotate_effects.append([int(line[1]), self.radians_to_degrees(float(line[2]))])
+                        self.__rotate_effects[int(line[1])] = Animation.radians_to_degrees(float(line[2]))
                 elif line[0].upper() == "STRETCHXEFFECT":
-                    self.__stretch_x_effects.append(line[1:] if len(line) > 1 else "")
+                    self.__stretch_x_effects[line[1]] = line[2:] if len(line) > 1 else ""
                 elif line[0].upper() == "STRETCHYEFFECT":
-                    self.__stretch_y_effects.append(line[1:] if len(line) > 1 else "")
+                    self.__stretch_y_effects[line[1]] = line[2:] if len(line) > 1 else ""
+                elif line[0].upper() == "COLOREFFECT":
+                    self.__color_effects[line[1]] = line[2:]
                 elif self.__record_ani and not self.is_single_dir:
                     self.__generate_frames(line)
                 elif self.__record_ani and self.is_single_dir:
@@ -208,6 +210,7 @@ class Animation:
             return False
         return True
 
+    @staticmethod
     def __is_pos_or_neg_int(self, value: str) -> bool:
         if value[0] == '-':
             value = value[1:]
@@ -233,8 +236,8 @@ class Animation:
         self.__setbackto = setbackto
 
     def toggle_single_dir(self) -> None:
-        def i_plus_one(i):
-            return i+1 if i+1 < len(self.__frames) else i
+        def i_plus_one(j):
+            return j+1 if j+1 < len(self.__frames) else j
         # up, down, left, right
         if self.is_single_dir:
             new_frames = []
@@ -272,10 +275,12 @@ class Animation:
         """
         self.__frames = self.__frames[::-1]
 
-    def radians_to_degrees(self, radians: float) -> float:
+    @staticmethod
+    def radians_to_degrees(radians: float) -> float:
         return radians * 180 / math.pi
 
-    def degrees_to_radians(self, degrees: float) -> float:
+    @staticmethod
+    def degrees_to_radians(degrees: float) -> float:
         return degrees * math.pi / 180
 
     def save(self, file_name: str) -> None:
