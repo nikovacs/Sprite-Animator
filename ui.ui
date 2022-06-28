@@ -55,7 +55,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="redo__btn">
+         <widget class="QPushButton" name="redo_btn">
           <property name="text">
            <string>Redo</string>
           </property>
@@ -112,14 +112,7 @@
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="0,2,10,1">
-        <item>
-         <widget class="QScrollBar" name="verticalScrollBar">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-         </widget>
-        </item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="2,1">
         <item>
          <widget class="QScrollArea" name="sprite_scroll_area">
           <property name="widgetResizable">
@@ -130,15 +123,12 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>128</width>
+             <width>677</width>
              <height>796</height>
             </rect>
            </property>
           </widget>
          </widget>
-        </item>
-        <item>
-         <widget class="QGraphicsView" name="graphicsView"/>
         </item>
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -158,22 +148,22 @@
              <widget class="QComboBox" name="dir_combo_box">
               <item>
                <property name="text">
-                <string>Left</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
                 <string>Up</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>Right</string>
+                <string>Left</string>
                </property>
               </item>
               <item>
                <property name="text">
                 <string>Down</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Right</string>
                </property>
               </item>
              </widget>
@@ -230,6 +220,12 @@
                <layout class="QHBoxLayout" name="horizontalLayout_7">
                 <item>
                  <widget class="QPushButton" name="plus_x_btn">
+                  <property name="minimumSize">
+                   <size>
+                    <width>25</width>
+                    <height>0</height>
+                   </size>
+                  </property>
                   <property name="maximumSize">
                    <size>
                     <width>25</width>
@@ -243,6 +239,12 @@
                 </item>
                 <item>
                  <widget class="QPushButton" name="minus_x_btn">
+                  <property name="minimumSize">
+                   <size>
+                    <width>25</width>
+                    <height>0</height>
+                   </size>
+                  </property>
                   <property name="maximumSize">
                    <size>
                     <width>25</width>
@@ -256,6 +258,12 @@
                 </item>
                 <item>
                  <widget class="QPushButton" name="plus_y_btn">
+                  <property name="minimumSize">
+                   <size>
+                    <width>25</width>
+                    <height>0</height>
+                   </size>
+                  </property>
                   <property name="maximumSize">
                    <size>
                     <width>25</width>
@@ -269,6 +277,12 @@
                 </item>
                 <item>
                  <widget class="QPushButton" name="minus_y_btn">
+                  <property name="minimumSize">
+                   <size>
+                    <width>25</width>
+                    <height>0</height>
+                   </size>
+                  </property>
                   <property name="maximumSize">
                    <size>
                     <width>25</width>
@@ -306,6 +320,12 @@
                 </item>
                 <item>
                  <widget class="QLineEdit" name="x_textbox">
+                  <property name="minimumSize">
+                   <size>
+                    <width>35</width>
+                    <height>0</height>
+                   </size>
+                  </property>
                   <property name="maximumSize">
                    <size>
                     <width>25</width>
@@ -323,6 +343,12 @@
                 </item>
                 <item>
                  <widget class="QLineEdit" name="y_textbox">
+                  <property name="minimumSize">
+                   <size>
+                    <width>35</width>
+                    <height>0</height>
+                   </size>
+                  </property>
                   <property name="maximumSize">
                    <size>
                     <width>25</width>
@@ -406,7 +432,7 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QLineEdit" name="lineEdit_5"/>
+                 <widget class="QLineEdit" name="setbackto_textbox"/>
                 </item>
                </layout>
               </item>

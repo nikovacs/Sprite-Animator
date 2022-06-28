@@ -20,6 +20,8 @@ class Animator_GUI(Ui_MainWindow):
     def __init__(self, MainWindow) -> None:
         super().__init__()
         super().setupUi(MainWindow)
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "Animation Editor"))
         self.MainWindow = MainWindow
         self.__init_graphics_view()
 
