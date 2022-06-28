@@ -209,7 +209,7 @@ class NewSpriteDialog(NewSpriteUI):
     def rotate_pixmap(sprite, pixmap):
         if sprite.rotation != 0:
             wh = max(pixmap.width(), pixmap.height())
-            x_diff, y_diff = abs(pixmap.width() - wh) / 2, abs(pixmap.height() - wh) / 2
+            x_diff, y_diff = NewSpriteDialog.calculate_diffs(pixmap, wh)
             NewSpriteDialog.pad_pixmap(pixmap, abs(pixmap.width() - wh) / 2, abs(pixmap.height() - wh) / 2)
             new_pixmap = QtGui.QPixmap(wh, wh)
             new_pixmap.fill(QtCore.Qt.transparent)
@@ -219,10 +219,14 @@ class NewSpriteDialog(NewSpriteUI):
             painter.translate(-pixmap.width() / 2, -pixmap.height() / 2)
             painter.drawPixmap(x_diff, y_diff, pixmap.width(), pixmap.height(), pixmap)
             painter.end()
-            new_pixmap.save(f"{sprite.desc}rotated.png")
-            return new_pixmap#.transformed(QtGui.QTransform().translate(wh / 2, wh / 2).translate(-pixmap.width() / 2, -pixmap.height() / 2))
+            return new_pixmap
         else:
             return pixmap
+
+    @staticmethod
+    def calculate_diffs(pixmap, wh):
+        x_diff, y_diff = abs(pixmap.width() - wh) / 2, abs(pixmap.height() - wh) / 2
+        return x_diff, y_diff
 
     @staticmethod
     def stretch_pixmap(sprite: Sprite, pixmap: QtGui.QPixmap):
@@ -234,15 +238,19 @@ class NewSpriteDialog(NewSpriteUI):
         """
         if sprite.stretch_x != 1 or sprite.stretch_y != 1:
             wh = max(pixmap.width(), pixmap.height()) * max(abs(sprite.stretch_x), abs(sprite.stretch_y))
+            x_diff, y_diff = NewSpriteDialog.calculate_diffs(pixmap, wh)
             new_pixmap = QtGui.QPixmap(wh, wh)
             new_pixmap.fill(QtCore.Qt.transparent)
             painter = QtGui.QPainter(new_pixmap)
             painter.translate(pixmap.width() / 2, pixmap.height() / 2)
             painter.scale(sprite.stretch_x, sprite.stretch_y)
             painter.translate(-pixmap.width() / 2, -pixmap.height() / 2)
-            painter.drawPixmap(0, 0, pixmap)      
+            painter.drawPixmap(x_diff, y_diff, pixmap)
             painter.end()
-            return new_pixmap.transformed(QtGui.QTransform().translate(wh / 2, wh / 2).translate(-pixmap.width() / 2, -pixmap.height() / 2))
+            return new_pixmap
         else:
             return pixmap
-        
+
+    @staticmethod
+    def color_effects(sprite: Sprite, pixmap: QtGui.QPixmap):
+        pass
