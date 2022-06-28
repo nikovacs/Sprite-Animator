@@ -128,6 +128,8 @@ class Animation:
                     self.__stretch_y_effects[int(line[1])] = line[2:] if len(line) > 1 else ""
                 elif line[0].upper() == "COLOREFFECT":
                     self.__color_effects[int(line[1])] = line[2:]
+                elif line[0].upper() == "ZOOMEFFECT":
+                    pass
                 elif self.__record_ani and not self.is_single_dir:
                     self.__generate_frames(line)
                 elif self.__record_ani and self.is_single_dir:
@@ -222,12 +224,12 @@ class Animation:
         if line[0].lower() != "sprite" or len(line) < 7:
             return False
         _, index, _, x, y, w, h = line[:7]
-        if not self.__is_pos_or_neg_int(index) or not x.isdigit() or not y.isdigit() or not w.isdigit() or not h.isdigit():
+        if not Animation.__is_pos_or_neg_int(index) or not x.isdigit() or not y.isdigit() or not w.isdigit() or not h.isdigit():
             return False
         return True
 
     @staticmethod
-    def __is_pos_or_neg_int(self, value: str) -> bool:
+    def __is_pos_or_neg_int(value: str) -> bool:
         if value[0] == '-':
             value = value[1:]
         return value.isdigit()
