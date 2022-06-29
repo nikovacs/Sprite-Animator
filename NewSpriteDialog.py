@@ -288,7 +288,6 @@ class NewSpriteDialog(NewSpriteUI):
             else:
                 wh = max(pixmap.width(), pixmap.height())
             pixmap = NewSpriteDialog.pad_pixmap(pixmap, abs(pixmap.width() - wh) / 2, abs(pixmap.height() - wh) / 2)
-            pixmap.save("before.png")
             x_diff, y_diff = NewSpriteDialog.calculate_diffs(pixmap, wh)
             new_pixmap = QtGui.QPixmap(wh, wh)
             new_pixmap.fill(QtCore.Qt.transparent)
@@ -298,7 +297,6 @@ class NewSpriteDialog(NewSpriteUI):
             painter.translate(-pixmap.width() / 2, -pixmap.height() / 2)
             painter.drawPixmap(x_diff, y_diff, pixmap)
             painter.end()
-            new_pixmap.save("after.png")
             return new_pixmap
         return pixmap
 
