@@ -483,16 +483,20 @@ class Animator_GUI(Ui_MainWindow):
         This method is intended to be called from within a with TemporaryDirectory() block.
         """
         if image_path:
-            image = Image.open(image_path)
-            image = image.crop((sprite.x, sprite.y, sprite.x + sprite.width, sprite.y + sprite.height))
-            # TODO add stretch effects color effects.
-            image.save(os.path.join(tempdir, f"{sprite.index}.png"))
+            im = Image.open(image_path)
+            im_width, im_height = im.size
+            x_to_increase, y_to_increase = NewSpriteDialog.fix_sprite_xy_and_get_excess_dimensions(im_height, im_width, sprite)
+            im = im.crop((sprite.x, sprite.y, sprite.x + sprite.width, sprite.y + sprite.height))
+            im.save(os.path.join(tempdir, f"{sprite.index}.png"))
             original_pixmap = QtGui.QPixmap(os.path.join(tempdir, f"{sprite.index}.png"))
+            original_pixmap = NewSpriteDialog.expand_pixmap_if_needed(original_pixmap, x_to_increase, y_to_increase)
             pixmap = NewSpriteDialog.rotate_pixmap(sprite, original_pixmap)
             pixmap = NewSpriteDialog.stretch_pixmap(sprite, pixmap)
+            pixmap = NewSpriteDialog.zoom_pixmap(sprite, pixmap)
             pixmap = NewSpriteDialog.add_color_effects_to_pixmap(sprite, pixmap)
             self.sprite_images[sprite.index] = pixmap
             self.__generate_offsets(sprite, original_pixmap, pixmap)
+            im.close()
         else:
             self.__make_default_sprite_img(sprite)
 
