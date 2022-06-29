@@ -220,24 +220,24 @@ class NewSpriteDialog(NewSpriteUI):
     @staticmethod
     def rotate_pixmap(sprite, pixmap):
         if sprite.rotation != 0:
-            wh = max(pixmap.width(), pixmap.height())
+            wh = max(pixmap.width(), pixmap.height()) * 2
+            if wh % 2 == 1: wh += 1
+            pixmap = NewSpriteDialog.pad_pixmap(pixmap, abs(pixmap.width() - wh) / 2, abs(pixmap.height() - wh) / 2)
             x_diff, y_diff = NewSpriteDialog.calculate_diffs(pixmap, wh)
-            NewSpriteDialog.pad_pixmap(pixmap, abs(pixmap.width() - wh) / 2, abs(pixmap.height() - wh) / 2)
             new_pixmap = QtGui.QPixmap(wh, wh)
             new_pixmap.fill(QtCore.Qt.transparent)
             painter = QtGui.QPainter(new_pixmap)
             painter.translate(pixmap.width() / 2, pixmap.height() / 2)
             painter.rotate(sprite.rotation)
             painter.translate(-pixmap.width() / 2, -pixmap.height() / 2)
-            painter.drawPixmap(x_diff, y_diff, pixmap.width(), pixmap.height(), pixmap)
+            painter.drawPixmap(x_diff, y_diff, pixmap)
             painter.end()
             return new_pixmap
-        else:
-            return pixmap
+        return pixmap
 
     @staticmethod
     def calculate_diffs(pixmap, wh):
-        x_diff, y_diff = abs(pixmap.width() - wh) / 2, abs(pixmap.height() - wh) / 2
+        x_diff, y_diff = (wh - pixmap.width()) / 2, (wh - pixmap.height()) / 2
         return x_diff, y_diff
 
     @staticmethod
@@ -249,7 +249,10 @@ class NewSpriteDialog(NewSpriteUI):
         @return: the stretched pixmap, but with maintained 0, 0
         """
         if sprite.stretch_x != 1 or sprite.stretch_y != 1:
-            wh = max(pixmap.width(), pixmap.height()) * max(abs(sprite.stretch_x), abs(sprite.stretch_y))
+            print("STRETCHING")
+            wh = max(pixmap.width(), pixmap.height()) * max(abs(sprite.stretch_x), abs(sprite.stretch_y)) * 2
+            if wh % 2 == 1: wh += 1
+            pixmap = NewSpriteDialog.pad_pixmap(pixmap, abs(pixmap.width() - wh) / 2, abs(pixmap.height() - wh) / 2)
             x_diff, y_diff = NewSpriteDialog.calculate_diffs(pixmap, wh)
             new_pixmap = QtGui.QPixmap(wh, wh)
             new_pixmap.fill(QtCore.Qt.transparent)
@@ -260,12 +263,12 @@ class NewSpriteDialog(NewSpriteUI):
             painter.drawPixmap(x_diff, y_diff, pixmap)
             painter.end()
             return new_pixmap
-        else:
-            return pixmap
+        return pixmap
 
     @staticmethod
     def add_color_effects_to_pixmap(sprite: Sprite, pixmap: QtGui.QPixmap):
         if sprite.color_effect != [1, 1, 1, 1]:
+            print("COLOR EFFECT")
             blue, green, red, alpha = sprite.color_effect
             np_pixmap = NewSpriteDialog.__pixmap_to_numpy(pixmap)  # remember! in BGRA format
             np_pixmap[:, :, 0] = np_pixmap[:, :, 0] * blue
@@ -273,7 +276,55 @@ class NewSpriteDialog(NewSpriteUI):
             np_pixmap[:, :, 2] = np_pixmap[:, :, 2] * red
             np_pixmap[:, :, 3] = np_pixmap[:, :, 3] * alpha
             return NewSpriteDialog.__numpy_to_pixmap(np_pixmap)
-        else:
-            return pixmap
+        return pixmap
+
+    @staticmethod
+    def zoom_pixmap(sprite: Sprite, pixmap: QtGui.QPixmap):
+        if sprite.zoom != 1:
+            print("ZOOMING")
+            if abs(sprite.zoom) > 1:
+                wh = max(pixmap.width(), pixmap.height()) * abs(sprite.zoom) * 2
+                if wh % 2 == 1: wh += 1
+            else:
+                wh = max(pixmap.width(), pixmap.height())
+            pixmap = NewSpriteDialog.pad_pixmap(pixmap, abs(pixmap.width() - wh) / 2, abs(pixmap.height() - wh) / 2)
+            pixmap.save("before.png")
+            x_diff, y_diff = NewSpriteDialog.calculate_diffs(pixmap, wh)
+            new_pixmap = QtGui.QPixmap(wh, wh)
+            new_pixmap.fill(QtCore.Qt.transparent)
+            painter = QtGui.QPainter(new_pixmap)
+            painter.translate(pixmap.width() / 2, pixmap.height() / 2)
+            painter.scale(sprite.zoom, sprite.zoom)
+            painter.translate(-pixmap.width() / 2, -pixmap.height() / 2)
+            painter.drawPixmap(x_diff, y_diff, pixmap)
+            painter.end()
+            new_pixmap.save("after.png")
+            return new_pixmap
+        return pixmap
+
+    @staticmethod
+    def fix_sprite_xy_and_get_excess_dimensions(im_height, im_width, sprite) -> tuple:
+        x_to_increase, y_to_increase = 0, 0
+        if sprite.x + sprite.width > im_width:
+            x_to_increase = sprite.x + sprite.width - im_width
+            sprite.width = im_width - sprite.x
+        if sprite.y + sprite.height > im_height:
+            y_to_increase = sprite.y + sprite.height - im_height
+            sprite.height = im_height - sprite.y
+        return x_to_increase, y_to_increase
+
+    @staticmethod
+    def expand_pixmap_if_needed(pixmap, x_to_increase=0, y_to_increase=0) -> QtGui.QPixmap:
+        if x_to_increase > 0 or y_to_increase > 0:
+            new_x = pixmap.width() + x_to_increase
+            new_y = pixmap.height() + y_to_increase
+            new_pixmap = QtGui.QPixmap(new_x, new_y)
+            new_pixmap.fill(QtCore.Qt.transparent)
+            painter = QtGui.QPainter(new_pixmap)
+            painter.drawPixmap(0, 0, pixmap)
+            painter.end()
+            return new_pixmap
+        return pixmap
+
 
 
