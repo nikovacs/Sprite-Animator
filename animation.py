@@ -14,6 +14,7 @@ class Animation:
         self.__stretch_x_effects = {}  # ex. {index: int, stretch: float}
         self.__stretch_y_effects = {}
         self.__color_effects = {}  # ex. {index: int, [R,G,B,A]}
+        self.__zoom_effects = {}  # ex. (index: int, zoom: float)
         self.__frames = []
         self.__sprites_list = []
 
@@ -124,10 +125,9 @@ class Animation:
                 elif line[0].upper() == "STRETCHYEFFECT":
                     self.__stretch_y_effects[int(line[1])] = float(line[2]) if len(line) > 1 else 1
                 elif line[0].upper() == "COLOREFFECT":
-                    print("COLOR EFFECT")
                     self.__color_effects[int(line[1])] = [float(x) for x in line[2:]]
                 elif line[0].upper() == "ZOOMEFFECT":
-                    pass
+                    self.__zoom_effects[int(line[1])] = float(line[2]) if len(line) > 1 else 1
                 elif self.__record_ani and not self.is_single_dir:
                     self.__generate_frames(line)
                 elif self.__record_ani and self.is_single_dir:
@@ -143,6 +143,13 @@ class Animation:
             self.__apply_stretch_effects()
         if len(self.__color_effects) > 0:
             self.__apply_color_effects()
+        if len(self.__zoom_effects) > 0:
+            self.__apply_zoom_effects()
+
+    def __apply_zoom_effects(self):
+        for sprite in self.sprites:
+            if sprite.index in self.__zoom_effects:
+                sprite.zoom = self.__zoom_effects[sprite.index]
 
     def __apply_stretch_effects(self) -> None:
         for sprite in self.sprites:
@@ -257,8 +264,7 @@ class Animation:
         # up, down, left, right
         if self.is_single_dir:
             new_frames = []
-            print(len(self.frames))
-            for i in range(0, len(self.frames), 4): 
+            for i in range(0, len(self.frames), 4):
                 new_frame = copy.deepcopy(self.frames[i])
                 new_frame.set_frame_parts({
                     # does not matter which direction we grab because they should all be pointing to the same frame.
