@@ -452,7 +452,7 @@ class Animator_GUI(Ui_MainWindow):
         attr = attr.upper()
         sprites = [sprite for sprite in self.curr_animation.sprites if sprite.image == attr]
         with TemporaryDirectory() as temp_dir:
-            for sprite in sprites: self.__load_and_crop_sprite(self.find_file(sprite.image), sprite, temp_dir)
+            for sprite in sprites: self.load_and_crop_sprite(self.find_file(sprite.image), sprite, temp_dir)
 
     def __load_sfx_from_ani(self) -> None:
         if self.curr_animation:
@@ -470,46 +470,10 @@ class Animator_GUI(Ui_MainWindow):
             with TemporaryDirectory() as tempdir:
                 for sprite in self.curr_animation.sprites:
                     image_path = self.find_file(sprite.image)
-                    if image_path:
-                        self.__load_and_crop_sprite(image_path, sprite, tempdir)
-                    else:
-                        self.__make_default_sprite_img(sprite)
-
-    def __make_default_sprite_img(self, sprite):
-        self.sprite_images[sprite.index] = QtGui.QPixmap(sprite.width, sprite.height)
-
-    def __load_and_crop_sprite(self, image_path, sprite, tempdir):
-        """
-        This method is intended to be called from within a with TemporaryDirectory() block.
-        """
-        if image_path:
-            im = Image.open(image_path)
-            im_width, im_height = im.size
-            x_to_increase, y_to_increase = NewSpriteDialog.fix_sprite_xy_and_get_excess_dimensions(im_height, im_width, sprite)
-            im = im.crop((sprite.x, sprite.y, sprite.x + sprite.width, sprite.y + sprite.height))
-            im.save(os.path.join(tempdir, f"{sprite.index}.png"))
-            original_pixmap = QtGui.QPixmap(os.path.join(tempdir, f"{sprite.index}.png"))
-            original_pixmap = NewSpriteDialog.expand_pixmap_if_needed(original_pixmap, x_to_increase, y_to_increase)
-            pixmap = NewSpriteDialog.rotate_pixmap(sprite, original_pixmap)
-            pixmap = NewSpriteDialog.stretch_pixmap(sprite, pixmap)
-            pixmap = NewSpriteDialog.zoom_pixmap(sprite, pixmap)
-            pixmap = NewSpriteDialog.add_color_effects_to_pixmap(sprite, pixmap)
-            self.sprite_images[sprite.index] = pixmap
-            self.__generate_offsets(sprite, original_pixmap, pixmap)
-            im.close()
-        else:
-            self.__make_default_sprite_img(sprite)
-
-    def __generate_offsets(self, sprite: Sprite, original_pixmap: QtGui.QPixmap, pixmap: QtGui.QPixmap) -> None:
-        """
-        This method is called after modifying the sprite pixmap...
-        Such as, rotating, zooming, stretching, or anything else that changes the size of the pixmap.
-        @param sprite: Sprite object of the corresponding pixmap. Needed for its attributes (specifically index).
-        @param original_pixmap: The original pixmap before any modifications.
-        @param pixmap: The pixmap after modifications.
-        """
-        self.sprite_offsets[sprite.index] = (abs(original_pixmap.width() / 2 - pixmap.width() / 2),
-                                             abs(original_pixmap.height() / 2 - pixmap.height() / 2))
+                    pixmap, x_offset, y_offset = NewSpriteDialog.load_and_crop_sprite(image_path, sprite, tempdir)
+                    if x_offset or y_offset:
+                        self.sprite_offsets[sprite.index] = (x_offset, y_offset)
+                    self.sprite_images[sprite.index] = pixmap
 
     def find_file(self, file_name):
         if file_name in self.__image_path_map:

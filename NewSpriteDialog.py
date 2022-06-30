@@ -1,6 +1,8 @@
 import math
 import sys
-import time
+import os
+from tempfile import TemporaryDirectory
+from PIL import Image
 
 from PyQt5 import QtWidgets, QtCore, QtGui, QtWidgets
 from new_sprite_ui import Ui_Dialog as NewSpriteUI
@@ -13,11 +15,15 @@ class NewSpriteDialog(NewSpriteUI):
         self.animator = animator
         parent.setWindowTitle("Add New Sprite")
         sys.setrecursionlimit(10000)
+
         self.__set_stylesheets()
         self.__init_vars()
 
         self.__init_slicer()
         self.__init_preview()
+
+        self.__x_offset = 0
+        self.__y_offset = 0
 
         self.image_combobox.currentIndexChanged.connect(self.update)
 
@@ -39,7 +45,74 @@ class NewSpriteDialog(NewSpriteUI):
 
         self.slicer.scene().mousePressEvent = self.__slicer_mouse_press_event
 
+        self.zoom_textbox.setText("1")
+        self.zoom_textbox.setValidator(QtGui.QDoubleValidator(-100, 100, 2))
+        self.zoom_textbox.textChanged.connect(self.__update_zoom)
+
+        self.rotate_textbox.setText("0")
+        self.rotate_textbox.setValidator(QtGui.QIntValidator(-360, 360))
+        self.rotate_textbox.textChanged.connect(self.__update_rotate)
+
+        self.stretchx_textbox.setText("1")
+        self.stretchx_textbox.setValidator(QtGui.QDoubleValidator(-100, 100, 2))
+        self.stretchx_textbox.textChanged.connect(self.__update_stretchx)
+
+        self.stretchy_textbox.setText("1")
+        self.stretchy_textbox.setValidator(QtGui.QDoubleValidator(-100, 100, 2))
+        self.stretchy_textbox.textChanged.connect(self.__update_stretchy)
+
+        color_validator = QtGui.QDoubleValidator(0, 1, 2)
+        color_validator.setNotation(QtGui.QDoubleValidator.StandardNotation)
+        self.red.setText("1")
+        self.red.setValidator(color_validator)
+        self.red.textChanged.connect(self.__validate_color)
+        
+        self.green.setText("1")
+        self.green.setValidator(color_validator)
+        self.green.textChanged.connect(self.__validate_color)
+
+        self.blue.setText("1")
+        self.blue.setValidator(color_validator)
+        self.blue.textChanged.connect(self.__validate_color)
+
+        self.alpha.setText("1")
+        self.alpha.setValidator(color_validator)
+        self.alpha.textChanged.connect(self.__validate_color)
+
         self.update()
+
+    def __validate_color(self) -> None:
+        color_textboxes = [self.red, self.green, self.blue, self.alpha]
+        for element in color_textboxes:
+            text = element.text()
+            if text == "." or text == "": return
+            if float(text) > 1: element.setText("1")
+            if float(text) < 0: element.setText("0")
+        self.__update_preview()
+
+    def __update_zoom(self) -> None:
+        if self.zoom_textbox.text()  in ("-", ".", ""):
+            return
+        self.__update_preview()
+
+    def __update_rotate(self) -> None:
+        if self.rotate_textbox.text() in ("-", ".", ""):
+            return
+        if float(self.rotate_textbox.text()) > 360:
+            self.rotate_textbox.setText("360")
+        if float(self.rotate_textbox.text()) < -360:
+            self.rotate_textbox.setText("-360")
+        self.__update_preview()
+
+    def __update_stretchx(self) -> None:
+        if self.stretchx_textbox.text() in ("-", ".", ""):
+            return
+        self.__update_preview()
+
+    def __update_stretchy(self) -> None:
+        if self.stretchy_textbox.text() in ("-", ".", ""):
+            return
+        self.__update_preview()
 
     def __slicer_mouse_press_event(self, e) -> None:
         viewPoint = self.slicer.mapFromGlobal(QtGui.QCursor.pos())
@@ -54,13 +127,16 @@ class NewSpriteDialog(NewSpriteUI):
         @param point: (x, y) based on where user clicked on the preview.
         """
         x, y = point
-        np_image = NewSpriteDialog.__pixmap_to_numpy(self.pixmap)
+        np_image = NewSpriteDialog.__pixmap_to_numpy(self.slicer_pixmap)
+
+        if x < 0 or y < 0 or x >= np_image.shape[1] or y >= np_image.shape[0]:
+            return
+
         np_pixels_checked = np.zeros(np_image.shape[:-1], dtype=np.uint8)
         self.min_x, self.max_x = None, None
         self.min_y, self.max_y = None, None
 
-        if np_image[y, x, 3] == 0: # clicked on transparent pixel (no sprite to be found)
-            print("transparent pixel")
+        if np_image[y, x, 3] == 0:  # clicked on transparent pixel (no sprite to be found)
             return
         
         self.__sprite_finder(x, y, np_image, np_pixels_checked)
@@ -91,35 +167,16 @@ class NewSpriteDialog(NewSpriteUI):
             if self.max_y is None or y > self.max_y: self.max_y = y
             if self.min_y is None or y < self.min_y: self.min_y = y
             self.__sprite_finder(x, y, image, pixels_checked)
-    @staticmethod
-    def __pixmap_to_numpy(pixmap: QtGui.QPixmap) -> np.ndarray:
-        """
-        returns a numpy array of the pixmap in RGBA format.
-        All that matters is that the alpha is the fourth value.
-        @param pixmap: QtGui.QPixmap to be turned into a numpy array
-        @return: numpy array of the pixmap in RGBA format. (shape: (height, width, 4))
-        """
-        channels_count = 4
-        image = pixmap.toImage()
-        s = image.bits().asstring(pixmap.width() * pixmap.height() * channels_count)
-        arr = np.fromstring(s, dtype=np.uint8).reshape((pixmap.height(), pixmap.width(), channels_count))
-        return arr
-
-    @staticmethod
-    def __numpy_to_pixmap(np_image: np.ndarray) -> QtGui.QPixmap:
-        """
-        returns a QPixmap from a numpy array.
-        """
-        image = QtGui.QImage(np_image.data, np_image.shape[1], np_image.shape[0], QtGui.QImage.Format_RGBA8888)
-        pixmap = QtGui.QPixmap.fromImage(image)
-        return pixmap
 
     def __init_vars(self):
         self.image_file = ""
-        self.pixmap = None
+        self.slicer_pixmap = None
+        self.preview_pixmap = None
         self.desc = ""
         self.index = None
         self.__init_xywh()
+        self.desc = ""
+        self.index = None
 
     def __init_xywh(self):
         self.x = None
@@ -159,14 +216,31 @@ class NewSpriteDialog(NewSpriteUI):
 
     def __update_preview(self) -> None:
         self.preview.scene().clear()
-        if self.pixmap and self.x is not None and self.y is not None and self.w and self.h:
-            self.preview.scene().addPixmap(self.pixmap.copy(self.x, self.y, self.w, self.h))
+        if self.slicer_pixmap and self.x is not None and self.y is not None and self.w and self.h and self.x >= 0 and self.y >= 0 and self.w >= 1 and self.h >= 1:
+            sprite = self.__setup_temp_sprite()
+            with TemporaryDirectory() as temp_dir:
+                self.preview_pixmap, self.__x_offset, self.__y_offset = NewSpriteDialog.load_and_crop_sprite(self.image_file, sprite, temp_dir)
+            self.preview.scene().addPixmap(self.preview_pixmap.copy(self.__x_offset, self.__y_offset, self.w, self.h))
             self.preview.fitInView(self.preview.scene().itemsBoundingRect(), QtCore.Qt.KeepAspectRatio)
+
+    def __setup_temp_sprite(self) -> Sprite:
+        sprite = Sprite(-1, self.image_file, self.x, self.y, self.w, self.h)
+        if self.zoom_textbox.text() != "1":
+            sprite.zoom = float(self.zoom_textbox.text())
+        if self.rotate_textbox.text() != "0":
+            sprite.rotation = float(self.rotate_textbox.text())
+        if self.stretchx_textbox.text() != "1":
+            sprite.stretch_x = float(self.stretchx_textbox.text())
+        if self.stretchy_textbox.text() != "1":
+            sprite.stretch_y = float(self.stretchy_textbox.text())
+        if self.red.text() != "1" or self.green.text() != "1" or self.blue.text() != "1" or self.alpha.text() != "1":
+            sprite.color_effect = (float(self.red.text()), float(self.green.text()), float(self.blue.text()), float(self.alpha.text()))
+        return sprite
             
     def __draw_on_slicer(self) -> None:
-        self.pixmap = QtGui.QPixmap(self.image_file)
+        self.slicer_pixmap = QtGui.QPixmap(self.image_file)
         self.slicer.scene().clear()
-        self.slicer.scene().addPixmap(self.pixmap)
+        self.slicer.scene().addPixmap(self.slicer_pixmap)
         self.slicer.fitInView(self.slicer.scene().itemsBoundingRect(), QtCore.Qt.KeepAspectRatio)
 
     def update_desc(self) -> None:
@@ -268,7 +342,6 @@ class NewSpriteDialog(NewSpriteUI):
     @staticmethod
     def add_color_effects_to_pixmap(sprite: Sprite, pixmap: QtGui.QPixmap):
         if sprite.color_effect != [1, 1, 1, 1]:
-            print("COLOR EFFECT")
             blue, green, red, alpha = sprite.color_effect
             np_pixmap = NewSpriteDialog.__pixmap_to_numpy(pixmap)  # remember! in BGRA format
             np_pixmap[:, :, 0] = np_pixmap[:, :, 0] * blue
@@ -281,7 +354,6 @@ class NewSpriteDialog(NewSpriteUI):
     @staticmethod
     def zoom_pixmap(sprite: Sprite, pixmap: QtGui.QPixmap):
         if sprite.zoom != 1:
-            print("ZOOMING")
             if abs(sprite.zoom) > 1:
                 wh = max(pixmap.width(), pixmap.height()) * abs(sprite.zoom) * 2
                 if wh % 2 == 1: wh += 1
@@ -322,6 +394,71 @@ class NewSpriteDialog(NewSpriteUI):
             painter.drawPixmap(0, 0, pixmap)
             painter.end()
             return new_pixmap
+        return pixmap
+    
+    @staticmethod
+    def load_and_crop_sprite(image_path, sprite, tempdir) -> tuple:
+        """
+        This method is intended to be called from within a with TemporaryDirectory() block.
+        @param image_path: the path to the image to load
+        @param sprite: the sprite object
+        @param tempdir: the temporary directory to save the temporary image to
+        @return: the final pixmap, x_offset, y_offset
+        """
+        if image_path:
+            im = Image.open(image_path)
+            im_width, im_height = im.size
+            x_to_increase, y_to_increase = NewSpriteDialog.fix_sprite_xy_and_get_excess_dimensions(im_height, im_width, sprite)
+            im = im.crop((sprite.x, sprite.y, sprite.x + sprite.width, sprite.y + sprite.height))
+            im.save(os.path.join(tempdir, f"{sprite.index}.png")) # TODO try to avoid the temporary dir and file by making pixmap from bytes
+            original_pixmap = QtGui.QPixmap(os.path.join(tempdir, f"{sprite.index}.png"))
+            original_pixmap = NewSpriteDialog.expand_pixmap_if_needed(original_pixmap, x_to_increase, y_to_increase)
+            pixmap = NewSpriteDialog.rotate_pixmap(sprite, original_pixmap)
+            pixmap = NewSpriteDialog.stretch_pixmap(sprite, pixmap)
+            pixmap = NewSpriteDialog.zoom_pixmap(sprite, pixmap)
+            pixmap = NewSpriteDialog.add_color_effects_to_pixmap(sprite, pixmap)
+            x_offset, y_offset = NewSpriteDialog.__generate_offsets(original_pixmap, pixmap)
+            im.close()
+            return pixmap, x_offset, y_offset
+        return NewSpriteDialog.__make_default_sprite_img(sprite), 0, 0
+
+    @staticmethod
+    def __make_default_sprite_img(sprite: Sprite) -> QtGui.QPixmap:
+        return QtGui.QPixmap(sprite.width, sprite.height)
+
+    @staticmethod
+    def __generate_offsets(original_pixmap: QtGui.QPixmap, pixmap: QtGui.QPixmap) -> tuple:
+        """
+        This method is called after modifying the sprite pixmap...
+        Such as, rotating, zooming, stretching, or anything else that changes the size of the pixmap.
+        @param sprite: Sprite object of the corresponding pixmap. Needed for its attributes (specifically index).
+        @param original_pixmap: The original pixmap before any modifications.
+        @param pixmap: The pixmap after modifications.
+        @return: The x and y offsets of the pixmap.
+        """
+        return (abs(original_pixmap.width() / 2 - pixmap.width() / 2), abs(original_pixmap.height() / 2 - pixmap.height() / 2))
+
+    @staticmethod
+    def __pixmap_to_numpy(pixmap: QtGui.QPixmap) -> np.ndarray:
+        """
+        returns a numpy array of the pixmap in RGBA format.
+        All that matters is that the alpha is the fourth value.
+        @param pixmap: QtGui.QPixmap to be turned into a numpy array
+        @return: numpy array of the pixmap in RGBA format. (shape: (height, width, 4))
+        """
+        channels_count = 4
+        image = pixmap.toImage()
+        s = image.bits().asstring(pixmap.width() * pixmap.height() * channels_count)
+        arr = np.fromstring(s, dtype=np.uint8).reshape((pixmap.height(), pixmap.width(), channels_count))
+        return arr
+
+    @staticmethod
+    def __numpy_to_pixmap(np_image: np.ndarray) -> QtGui.QPixmap:
+        """
+        returns a QPixmap from a numpy array.
+        """
+        image = QtGui.QImage(np_image.data, np_image.shape[1], np_image.shape[0], QtGui.QImage.Format_RGBA8888)
+        pixmap = QtGui.QPixmap.fromImage(image)
         return pixmap
 
 
