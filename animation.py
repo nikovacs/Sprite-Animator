@@ -57,6 +57,10 @@ class Animation:
     def setbackto(self) -> str:
         return self.__setbackto
 
+    def add_sprite(self, sprite: Sprite) -> None:
+        self.__sprites_list = [tmp_sprite for tmp_sprite in self.sprites if tmp_sprite.index != sprite.index]
+        self.__sprites_list.append(sprite)
+
     def add_new_frame(self, index: int, direction="right", frame_from_clipboard=None) -> None:
         """
         @param index: the index of the frame to insert the new frame

@@ -26,7 +26,7 @@ class Animator_GUI(Ui_MainWindow):
         self.__init_graphics_view()
 
         self.__init_vars()
-        self.__image_path_map = {} # not in init method because I want it to persist as long as the program is open
+        self.image_path_map = {} # not in init method because I want it to persist as long as the program is open
 
         btns = self.enable_disable_buttons(False)
 
@@ -443,6 +443,14 @@ class Animator_GUI(Ui_MainWindow):
             self.__set_frame_slider()
             self.__update_sfx_textbox()
             self.__play_frame_sfx()
+    
+    def add_sprite_to_scroll_area(self, sprite: Sprite) -> None:
+        self.curr_animation.add_sprite(sprite)
+        with TemporaryDirectory() as temp_dir:
+            pixmap, x_offset, y_offset = NewSpriteDialog.load_and_crop_sprite(self.image_path_map[sprite.index], sprite, temp_dir)
+            self.sprite_offsets[sprite.index] = (x_offset, y_offset)
+            self.sprite_images[sprite.index] = pixmap
+        self.__init_scroll_area()
 
     def __play_frame_sfx(self) -> None:
         if sfx := self.get_current_frame().sfx:
@@ -452,7 +460,7 @@ class Animator_GUI(Ui_MainWindow):
         attr = attr.upper()
         sprites = [sprite for sprite in self.curr_animation.sprites if sprite.image == attr]
         with TemporaryDirectory() as temp_dir:
-            for sprite in sprites: self.load_and_crop_sprite(self.find_file(sprite.image), sprite, temp_dir)
+            for sprite in sprites: NewSpriteDialog.load_and_crop_sprite(self.find_file(sprite.image), sprite, temp_dir)
 
     def __load_sfx_from_ani(self) -> None:
         if self.curr_animation:
@@ -476,14 +484,14 @@ class Animator_GUI(Ui_MainWindow):
                     self.sprite_images[sprite.index] = pixmap
 
     def find_file(self, file_name):
-        if file_name in self.__image_path_map:
-            return self.__image_path_map[file_name]
+        if file_name in self.image_path_map:
+            return self.image_path_map[file_name]
         for root, dirs, files in os.walk(r"C:\Users\kovac\Graal"):  # TODO TEMP HARD CODED TO MY GAME FOLDER, CHANGE TO "."
             for file in files:
                 if file.split(".")[0].lower() == file_name or file.lower() == file_name:
-                    self.__image_path_map[file_name] = os.path.join(root, file)
+                    self.image_path_map[file_name] = os.path.join(root, file)
                     return os.path.join(root, file)
-        file_name = file_name.upper()  # TODO: make these already be in self.__image_path_map from start.
+        file_name = file_name.upper()  # TODO: make these already be in self.image_path_map from start.
         if file_name == "SPRITES":
             return self.find_file("sprites.png")
         elif file_name == "SHIELD":
@@ -635,21 +643,9 @@ class Animator_GUI(Ui_MainWindow):
         """
         if self.curr_animation:
             new_sprite_window = QtWidgets.QDialog()
-            new_sprite_ui = NewSpriteDialog(self, new_sprite_window)
+            NewSpriteDialog(self, new_sprite_window)
             new_sprite_window.setStyleSheet(self.MainWindow.styleSheet())
             new_sprite_window.exec_()
-
-            # new_sprite_window.new_sprite_image_combobox
-            # new_sprite_window.new_sprite_custom_img_textbox
-            # new_sprite_window.new_sprite_description_textbox
-            # new_sprite_window.new_sprite_x_coord_textbox
-            # new_sprite_window.new_sprite_y_coord_textbox
-            # new_sprite_window.new_sprite_width_textbox
-            # new_sprite_window.new_sprite_height_textbox
-            # new_sprite_window.add_sprite_btn
-
-        # link add_sprite_btn to add_sprite_to_current_frame method
-        # TODO:
 
     def __change_background_color(self) -> None:
         """

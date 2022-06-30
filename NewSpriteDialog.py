@@ -12,6 +12,7 @@ import numpy as np
 class NewSpriteDialog(NewSpriteUI):
     def __init__(self, animator, parent=None):
         self.setupUi(parent)
+        self.parent = parent
         self.animator = animator
         parent.setWindowTitle("Add New Sprite")
         sys.setrecursionlimit(10000)
@@ -78,6 +79,9 @@ class NewSpriteDialog(NewSpriteUI):
         self.alpha.setText("1")
         self.alpha.setValidator(color_validator)
         self.alpha.textChanged.connect(self.__validate_color)
+
+        self.add_and_continue_btn.clicked.connect(self.__add_and_continue)
+        self.add_and_close_btn.clicked.connect(self.__add_and_close)
 
         self.update()
 
@@ -217,14 +221,15 @@ class NewSpriteDialog(NewSpriteUI):
     def __update_preview(self) -> None:
         self.preview.scene().clear()
         if self.slicer_pixmap and self.x is not None and self.y is not None and self.w and self.h and self.x >= 0 and self.y >= 0 and self.w >= 1 and self.h >= 1:
-            sprite = self.__setup_temp_sprite()
+            sprite = self.__setup_sprite()
             with TemporaryDirectory() as temp_dir:
                 self.preview_pixmap, self.__x_offset, self.__y_offset = NewSpriteDialog.load_and_crop_sprite(self.image_file, sprite, temp_dir)
             self.preview.scene().addPixmap(self.preview_pixmap.copy(self.__x_offset, self.__y_offset, self.w, self.h))
             self.preview.fitInView(self.preview.scene().itemsBoundingRect(), QtCore.Qt.KeepAspectRatio)
 
-    def __setup_temp_sprite(self) -> Sprite:
-        sprite = Sprite(-1, self.image_file, self.x, self.y, self.w, self.h)
+    def __setup_sprite(self) -> Sprite:
+        index = self.index if self.index else -1
+        sprite = Sprite(index, self.image_file, self.x, self.y, self.w, self.h)
         if self.zoom_textbox.text() != "1":
             sprite.zoom = float(self.zoom_textbox.text())
         if self.rotate_textbox.text() != "0":
@@ -275,6 +280,28 @@ class NewSpriteDialog(NewSpriteUI):
         self.width_textbox.setText(str(self.w))
         self.height_textbox.setText(str(self.h))
 
+    def add_sprite_to_animator(self, sprite: Sprite) -> None:
+        self.animator.image_path_map[sprite.index] = self.image_file
+        self.animator.add_sprite_to_scroll_area(sprite)
+
+    def __add_and_continue(self) -> None:
+        if self.__ready_to_add():
+            self.add_sprite_to_animator(self.__setup_sprite())
+
+    def __add_and_close(self) -> None:
+        if self.__ready_to_add():
+            self.add_sprite_to_animator(self.__setup_sprite())
+            QtWidgets.QDialog.accept(self.parent)
+
+    def __ready_to_add(self) -> bool:
+        return self.__valid_x() and self.__valid_y() and self.index is not None
+    
+    def __valid_x(self) -> bool:
+        return self.x is not None and 0 <= self.x < self.slicer_pixmap.width()
+        
+    def __valid_y(self) -> bool:
+        return self.y is not None and 0 <= self.y < self.slicer_pixmap.height()
+        
     """
     static methods
     """
