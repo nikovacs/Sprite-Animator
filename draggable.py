@@ -114,6 +114,18 @@ class DragSpriteView(QtWidgets.QGraphicsView):
         """
         self.parent.key_press_event(event)
 
+    # on right click, give the options to edit or delete
+    def contextMenuEvent(self, event):
+        menu = QtWidgets.QMenu()
+        edit_action = menu.addAction("Edit")
+        delete_action = menu.addAction("Delete")
+        action = menu.exec_(self.mapToGlobal(event.pos()))
+        if action == edit_action:
+            self.parent.edit_sprite(self.sprite)
+        elif action == delete_action:
+            self.parent.delete_sprite(self.sprite)
+
+
 
 
 
