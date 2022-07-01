@@ -1,3 +1,6 @@
+from sprite import Sprite
+
+
 class Frame:
     def __init__(self) -> None:
         """
@@ -41,6 +44,9 @@ class Frame:
         if isinstance(frame_parts, dict) and len(frame_parts) == 4 and set(frame_parts.keys()) == {"up", "left", "down", "right"}:
             self.__frame_parts = frame_parts
 
+    def delete_sprite(self, sprite: Sprite) -> None:
+        for frame_part in self.frame_parts.values():
+            frame_part.delete_sprite(sprite)
 
 class FramePart:
     """
@@ -90,6 +96,9 @@ class FramePart:
         elif direction.lower() == "vertical":
             y += amount
         self.list_of_sprites_xs_ys[layer] = (sprite, x, y)
+
+    def delete_sprite(self, sprite: Sprite) -> None:
+        self.list_of_sprites_xs_ys = [x for x in self.list_of_sprites_xs_ys if x[0] != sprite]
 
     def change_layer(self, layer_to_move: int, direction: str) -> bool:
         """

@@ -237,6 +237,11 @@ class Animation:
             return False
         return True
 
+    def delete_sprite(self, sprite) -> None:
+        self.__sprites_list.remove(sprite)
+        for frame in self.__frames:
+            frame.delete_sprite(sprite)
+
     @staticmethod
     def __is_pos_or_neg_int(value: str) -> bool:
         if value[0] == '-':

@@ -601,6 +601,18 @@ class Animator_GUI(Ui_MainWindow):
             self.curr_sprite = layer
             self.__update_sprite_textboxes()
 
+    def delete_sprite(self, sprite: Sprite) -> None:
+        """
+        Delete the provided sprite from the sprite scroll area and animation
+        """
+        if self.curr_animation:
+            self.curr_animation.delete_sprite(sprite)
+            del self.sprite_images[sprite.index]
+            if sprite.index in self.sprite_offsets:
+                del self.sprite_offsets[sprite.index]
+            self.__init_scroll_area()
+            self.__display_current_frame()
+
     def get_current_frame_part(self):
         """
         Gets the current frame part with respect to the current value of self.curr_dir
