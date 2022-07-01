@@ -561,7 +561,12 @@ class Animator_GUI(Ui_MainWindow):
 
             for index, image in sorted(self.sprite_images.items(), key=lambda x: x[0]):
                 im_view = DragSpriteView(self, image, index, self.curr_animation.sprites)
-                im_view.mouseReleaseEvent = lambda e, i=index: self.__add_sprite_to_frame_part(i)
+                im_view.mouseReleaseEvent = lambda e, i=index: self.__drag_sprite_view_mouse_event(e, i)
+
+    def __drag_sprite_view_mouse_event(self, event, i) -> None:
+        # make sure the event is a left mouse release event
+        if event.button() == QtCore.Qt.LeftButton:
+            self.__add_sprite_to_frame_part(i)
 
     def __add_sprite_to_frame_part(self, index: int) -> None:
         """
