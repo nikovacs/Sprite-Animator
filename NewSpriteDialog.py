@@ -1,10 +1,6 @@
-import io
 import math
 import sys
-import os
-from tempfile import TemporaryDirectory
 from PIL import Image, ImageQt
-
 from PyQt5 import QtWidgets, QtCore, QtGui, QtWidgets
 from new_sprite_ui import Ui_Dialog as NewSpriteUI
 from sprite import Sprite
@@ -486,6 +482,5 @@ class NewSpriteDialog(NewSpriteUI):
         image = QtGui.QImage(np_image.data, np_image.shape[1], np_image.shape[0], QtGui.QImage.Format_RGBA8888)
         pixmap = QtGui.QPixmap.fromImage(image)
         return pixmap
-
 
 

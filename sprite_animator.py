@@ -1,10 +1,7 @@
 import os
 import sys
 import time
-
-from PIL import Image
 from PyQt5 import QtCore, QtGui, QtWidgets
-
 from animation import Animation
 from sprite import Sprite
 from draggable import DragImage, DragSpriteView
