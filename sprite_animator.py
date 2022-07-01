@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-from tempfile import TemporaryDirectory
 
 from PIL import Image
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -446,10 +445,9 @@ class Animator_GUI(Ui_MainWindow):
     
     def add_sprite_to_scroll_area(self, sprite: Sprite) -> None:
         self.curr_animation.add_sprite(sprite)
-        with TemporaryDirectory() as temp_dir:
-            pixmap, x_offset, y_offset = NewSpriteDialog.load_and_crop_sprite(self.image_path_map[sprite.index], sprite, temp_dir)
-            self.sprite_offsets[sprite.index] = (x_offset, y_offset)
-            self.sprite_images[sprite.index] = pixmap
+        pixmap, x_offset, y_offset = NewSpriteDialog.load_and_crop_sprite(self.image_path_map[sprite.index], sprite)
+        self.sprite_offsets[sprite.index] = (x_offset, y_offset)
+        self.sprite_images[sprite.index] = pixmap
         self.__init_scroll_area()
 
     def __play_frame_sfx(self) -> None:
@@ -459,8 +457,7 @@ class Animator_GUI(Ui_MainWindow):
     def __update_attr_image(self, attr: str) -> None:
         attr = attr.upper()
         sprites = [sprite for sprite in self.curr_animation.sprites if sprite.image == attr]
-        with TemporaryDirectory() as temp_dir:
-            for sprite in sprites: NewSpriteDialog.load_and_crop_sprite(self.find_file(sprite.image), sprite, temp_dir)
+        for sprite in sprites: NewSpriteDialog.load_and_crop_sprite(self.find_file(sprite.image), sprite)
 
     def __load_sfx_from_ani(self) -> None:
         if self.curr_animation:
@@ -475,13 +472,12 @@ class Animator_GUI(Ui_MainWindow):
 
     def __load_sprites_from_ani(self):
         if self.curr_animation and len(self.curr_animation.sprites) > 0:
-            with TemporaryDirectory() as tempdir:
-                for sprite in self.curr_animation.sprites:
-                    image_path = self.find_file(sprite.image)
-                    pixmap, x_offset, y_offset = NewSpriteDialog.load_and_crop_sprite(image_path, sprite, tempdir)
-                    if x_offset or y_offset:
-                        self.sprite_offsets[sprite.index] = (x_offset, y_offset)
-                    self.sprite_images[sprite.index] = pixmap
+            for sprite in self.curr_animation.sprites:
+                image_path = self.find_file(sprite.image)
+                pixmap, x_offset, y_offset = NewSpriteDialog.load_and_crop_sprite(image_path, sprite)
+                if x_offset or y_offset:
+                    self.sprite_offsets[sprite.index] = (x_offset, y_offset)
+                self.sprite_images[sprite.index] = pixmap
 
     def find_file(self, file_name):
         if file_name in self.image_path_map:
