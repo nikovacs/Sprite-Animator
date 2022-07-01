@@ -613,6 +613,13 @@ class Animator_GUI(Ui_MainWindow):
             self.__init_scroll_area()
             self.__display_current_frame()
 
+    def edit_sprite(self, sprite: Sprite) -> None:
+        """
+        Edit the provided sprite in the sprite scroll area and animation
+        """
+        if self.curr_animation:
+            self.__add_new_sprite(sprite)
+
     def get_current_frame_part(self):
         """
         Gets the current frame part with respect to the current value of self.curr_dir
@@ -647,15 +654,16 @@ class Animator_GUI(Ui_MainWindow):
         self.curr_dir = self.dir_combo_box.currentText().lower()
         self.__display_current_frame()
 
-    def __add_new_sprite(self) -> None:
+    def __add_new_sprite(self, from_sprite: Sprite) -> None:
         """
         Creates a new window that allows the user to create a new sprite
         """
         if self.curr_animation:
             new_sprite_window = QtWidgets.QDialog()
-            NewSpriteDialog(self, new_sprite_window)
+            NewSpriteDialog(self, new_sprite_window, from_sprite)
             new_sprite_window.setStyleSheet(self.MainWindow.styleSheet())
             new_sprite_window.exec_()
+            self.__display_current_frame()
 
     def __change_background_color(self) -> None:
         """

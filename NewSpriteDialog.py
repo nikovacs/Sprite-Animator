@@ -7,12 +7,16 @@ from sprite import Sprite
 import numpy as np
 
 class NewSpriteDialog(NewSpriteUI):
-    def __init__(self, animator, parent=None):
+    def __init__(self, animator, parent=None, from_sprite=None):
         self.setupUi(parent)
         self.parent = parent
         self.animator = animator
         parent.setWindowTitle("Add New Sprite")
         sys.setrecursionlimit(10000)
+
+        self.from_sprite=from_sprite
+        self.__x_offset = 0
+        self.__y_offset = 0
 
         self.__set_stylesheets()
         self.__init_vars()
@@ -20,10 +24,8 @@ class NewSpriteDialog(NewSpriteUI):
         self.__init_slicer()
         self.__init_preview()
 
-        self.__x_offset = 0
-        self.__y_offset = 0
-
-        self.image_combobox.currentIndexChanged.connect(self.update)
+        self.image_combobox.currentIndexChanged.connect(self.new_image)
+        self.image_combobox.lineEdit().returnPressed.connect(self.new_image)
 
         self.desc_textbox.textChanged.connect(self.update_desc)
 
@@ -61,25 +63,31 @@ class NewSpriteDialog(NewSpriteUI):
 
         color_validator = QtGui.QDoubleValidator(0, 1, 2)
         color_validator.setNotation(QtGui.QDoubleValidator.StandardNotation)
-        self.red.setText("1")
+
         self.red.setValidator(color_validator)
         self.red.textChanged.connect(self.__validate_color)
         
-        self.green.setText("1")
         self.green.setValidator(color_validator)
         self.green.textChanged.connect(self.__validate_color)
 
-        self.blue.setText("1")
         self.blue.setValidator(color_validator)
         self.blue.textChanged.connect(self.__validate_color)
 
-        self.alpha.setText("1")
         self.alpha.setValidator(color_validator)
         self.alpha.textChanged.connect(self.__validate_color)
 
         self.add_and_continue_btn.clicked.connect(self.__add_and_continue)
-        self.add_and_close_btn.clicked.connect(self.__add_and_close)
+        # disable using enter key on the button
+        self.add_and_continue_btn.setAutoDefault(False)
 
+        self.add_and_close_btn.clicked.connect(self.__add_and_close)
+        # disable using enter key on the button
+        self.add_and_close_btn.setAutoDefault(False)
+
+        self.update()
+
+    def new_image(self) -> None:
+        self.from_sprite = None
         self.update()
 
     def __validate_color(self) -> None:
@@ -170,20 +178,19 @@ class NewSpriteDialog(NewSpriteUI):
             self.__sprite_finder(x, y, image, pixels_checked)
 
     def __init_vars(self):
+        image = self.from_sprite.image if self.from_sprite else "SPRITES"
+        self.image_combobox.lineEdit().setText(image)
         self.image_file = ""
         self.slicer_pixmap = None
         self.preview_pixmap = None
-        self.desc = ""
-        self.index = None
-        self.__init_xywh()
-        self.desc = ""
-        self.index = None
+        self.desc = self.from_sprite.desc if self.from_sprite else ""
+        self.index = self.from_sprite.index if self.from_sprite else ""
 
     def __init_xywh(self):
-        self.x = None
-        self.y = None
-        self.w = None
-        self.h = None
+        self.x = self.from_sprite.x if self.from_sprite else ""
+        self.y = self.from_sprite.y if self.from_sprite else ""
+        self.w = self.from_sprite.width if self.from_sprite else ""
+        self.h = self.from_sprite.height if self.from_sprite else ""
 
     def __set_stylesheets(self) -> None:
         self.preview.setStyleSheet("background-color: white;")
@@ -212,8 +219,30 @@ class NewSpriteDialog(NewSpriteUI):
     def update(self) -> None:
         self.__init_xywh()
         self.image_file = self.animator.find_file(self.image_combobox.currentText().strip())
+        self.__update_sprite_dimensions_textboxes()
+        self.__update_sprite_effects_textboxes()
+        self.__update_sprite_textboxes()
         self.__draw_on_slicer()
         self.__update_preview()
+
+    def __update_sprite_textboxes(self) -> None:
+        self.sprite_index_textbox.setText(str(self.index))
+        self.desc_textbox.setText(self.desc)
+
+    def __update_sprite_effects_textboxes(self) -> None:
+        zoom = self.from_sprite.zoom if self.from_sprite else 1
+        self.zoom_textbox.setText(str(zoom))
+        rotation = self.from_sprite.rotation if self.from_sprite else 0
+        self.rotate_textbox.setText(str(rotation))
+        stretch_x = self.from_sprite.stretch_x if self.from_sprite else 1
+        self.stretchx_textbox.setText(str(stretch_x))
+        stretch_y = self.from_sprite.stretch_y if self.from_sprite else 1
+        self.stretchy_textbox.setText(str(stretch_y))
+        r, g, b, a = self.from_sprite.color_effect if self.from_sprite else (1, 1, 1, 1)
+        self.red.setText(str(r))
+        self.green.setText(str(g))
+        self.blue.setText(str(b))
+        self.alpha.setText(str(a))
 
     def __update_preview(self) -> None:
         self.preview.scene().clear()
@@ -225,7 +254,7 @@ class NewSpriteDialog(NewSpriteUI):
 
     def __setup_sprite(self) -> Sprite:
         index = self.index if self.index else -1
-        sprite = Sprite(index, self.image_file, self.x, self.y, self.w, self.h)
+        sprite = Sprite(index, self.image_combobox.currentText().strip(), self.x, self.y, self.w, self.h, self.desc_textbox.text())
         if self.zoom_textbox.text() != "1":
             sprite.zoom = float(self.zoom_textbox.text())
         if self.rotate_textbox.text() != "0":
@@ -366,6 +395,7 @@ class NewSpriteDialog(NewSpriteUI):
     def add_color_effects_to_pixmap(sprite: Sprite, pixmap: QtGui.QPixmap):
         if sprite.color_effect != [1, 1, 1, 1]:
             blue, green, red, alpha = sprite.color_effect
+            print(sprite.color_effect)
             np_pixmap = NewSpriteDialog.__pixmap_to_numpy(pixmap)  # remember! in BGRA format
             np_pixmap[:, :, 0] = np_pixmap[:, :, 0] * blue
             np_pixmap[:, :, 1] = np_pixmap[:, :, 1] * green
