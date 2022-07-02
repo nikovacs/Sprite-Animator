@@ -1,3 +1,4 @@
+import copy
 import math
 import sys
 from PIL import Image, ImageQt
@@ -14,12 +15,13 @@ class NewSpriteDialog(NewSpriteUI):
         parent.setWindowTitle("Add New Sprite")
         sys.setrecursionlimit(10000)
 
-        self.from_sprite=from_sprite
+        self.from_sprite = from_sprite
         self.__x_offset = 0
         self.__y_offset = 0
 
         self.__set_stylesheets()
         self.__init_vars()
+        self.listen = False
 
         self.__init_slicer()
         self.__init_preview()
@@ -87,8 +89,11 @@ class NewSpriteDialog(NewSpriteUI):
         self.update()
 
     def new_image(self) -> None:
-        self.from_sprite = None
-        self.update()
+        if self.listen:
+            self.from_sprite = None
+            self.update()
+        else:
+            self.listen = True
 
     def __validate_color(self) -> None:
         color_textboxes = [self.red, self.green, self.blue, self.alpha]
@@ -147,6 +152,7 @@ class NewSpriteDialog(NewSpriteUI):
 
         if np_image[y, x, 3] == 0:  # clicked on transparent pixel (no sprite to be found)
             return
+    
         
         self.__sprite_finder(x, y, np_image, np_pixels_checked)
 
@@ -176,6 +182,17 @@ class NewSpriteDialog(NewSpriteUI):
             if self.max_y is None or y > self.max_y: self.max_y = y
             if self.min_y is None or y < self.min_y: self.min_y = y
             self.__sprite_finder(x, y, image, pixels_checked)
+
+    # def __sprite_finder(self, x: int, y: int, image: np.ndarray) -> None:
+    #     """
+    #     Recursive method to find the max and min x y coordinates of a clicked sprite
+    #     @param x: x coordinate
+    #     @param y: y coordinate
+    #     @param image: numpy array of the image
+    #     @param pixels_checked: numpy array of the pixels that have been checked (all zeros by default) (1 for checked) (same shape as image)0
+    #     """
+    #     np_pixels_checked = np.zeros(image.shape[:-1], dtype=np.uint8)
+
 
     def __init_vars(self):
         image = self.from_sprite.image if self.from_sprite else "SPRITES"
@@ -253,7 +270,7 @@ class NewSpriteDialog(NewSpriteUI):
             self.preview.fitInView(self.preview.scene().itemsBoundingRect(), QtCore.Qt.KeepAspectRatio)
 
     def __setup_sprite(self) -> Sprite:
-        index = self.index if self.index else -1
+        index = self.index if isinstance(self.index, int) else -1
         sprite = Sprite(index, self.image_combobox.currentText().strip(), self.x, self.y, self.w, self.h, self.desc_textbox.text())
         if self.zoom_textbox.text() != "1":
             sprite.zoom = float(self.zoom_textbox.text())
@@ -277,7 +294,10 @@ class NewSpriteDialog(NewSpriteUI):
         self.desc = self.desc_textbox.text()
 
     def update_index(self) -> None:
-        self.index = int(self.sprite_index_textbox.text()) if self.sprite_index_textbox.text() != "-" else self.index
+        if self.sprite_index_textbox.text():
+            self.index = int(self.sprite_index_textbox.text()) if self.sprite_index_textbox.text() != "-" else self.index
+        else:
+            self.index = ""
 
     def update_x(self, e) -> None:
         text = self.x_textbox.text()
@@ -319,7 +339,7 @@ class NewSpriteDialog(NewSpriteUI):
             QtWidgets.QDialog.accept(self.parent)
 
     def __ready_to_add(self) -> bool:
-        return self.__valid_x() and self.__valid_y() and self.index is not None
+        return self.__valid_x() and self.__valid_y() and isinstance(self.index, int)
     
     def __valid_x(self) -> bool:
         return self.x is not None and 0 <= self.x < self.slicer_pixmap.width()
@@ -394,13 +414,16 @@ class NewSpriteDialog(NewSpriteUI):
     @staticmethod
     def add_color_effects_to_pixmap(sprite: Sprite, pixmap: QtGui.QPixmap):
         if sprite.color_effect != [1, 1, 1, 1]:
-            blue, green, red, alpha = sprite.color_effect
-            print(sprite.color_effect)
+            red, green, blue, alpha = sprite.color_effect
             np_pixmap = NewSpriteDialog.__pixmap_to_numpy(pixmap)  # remember! in BGRA format
             np_pixmap[:, :, 0] = np_pixmap[:, :, 0] * blue
             np_pixmap[:, :, 1] = np_pixmap[:, :, 1] * green
             np_pixmap[:, :, 2] = np_pixmap[:, :, 2] * red
-            np_pixmap[:, :, 3] = np_pixmap[:, :, 3] * alpha
+            np_pixmap[:, :, 3] = np_pixmap[:, :, 3] * (1-alpha)
+            # convert back to RGBA
+            temp_blue, temp_red = copy.deepcopy(np_pixmap[:, :, 0]), np_pixmap[:, :, 2]
+            np_pixmap[:, :, 0] = temp_red
+            np_pixmap[:, :, 2] = temp_blue
             return NewSpriteDialog.__numpy_to_pixmap(np_pixmap)
         return pixmap
 
@@ -455,7 +478,6 @@ class NewSpriteDialog(NewSpriteUI):
         This method is intended to be called from within a with TemporaryDirectory() block.
         @param image_path: the path to the image to load
         @param sprite: the sprite object
-        @param tempdir: the temporary directory to save the temporary image to
         @return: the final pixmap, x_offset, y_offset
         """
         if image_path:
