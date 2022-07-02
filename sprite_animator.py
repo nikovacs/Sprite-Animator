@@ -341,7 +341,7 @@ class Animator_GUI(Ui_MainWindow):
         event.accept()
 
     def __delete_curr_sprite(self) -> None:
-        if self.curr_animation and self.curr_sprite and self.curr_sprite >= 0:
+        if self.curr_animation and self.curr_sprite is not None and self.curr_sprite >= 0:
             self.get_current_frame_part().list_of_sprites.pop(self.curr_sprite)
             self.curr_sprite = -1 if len(self.get_current_frame_part().list_of_sprites) > 0 else None
             self.__display_current_frame()
