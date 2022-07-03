@@ -244,6 +244,10 @@ class Animator_GUI(Ui_MainWindow):
 
     def __set_frame_length(self, length: int or float) -> None:
         if self.curr_animation:
+            length = round(length, 2)
+            length = round(length / 0.05) * 0.05
+            if length < 0.05: length = 0.05
+            self.length_textbox.setText(str(length))
             self.get_current_frame().set_length(length)
 
     def __do_sprite_combo_changed_event(self):
