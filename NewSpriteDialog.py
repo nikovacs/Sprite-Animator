@@ -417,7 +417,6 @@ class NewSpriteDialog(NewSpriteUI):
 
     @staticmethod
     def add_color_effects_to_pixmap(sprite: Sprite, pixmap: QtGui.QPixmap):
-        print(sprite.mode)
         if sprite.color_effect != [1, 1, 1, 1] or sprite.mode == 2:
             alpha = sprite.color_effect[3]
             if (alpha == 1 and sprite.mode != 2) or sprite.mode == 1:
