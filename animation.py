@@ -161,7 +161,6 @@ class Animation:
         if self.__color_effects: self.__apply_color_effects()
         if self.__zoom_effects: self.__apply_zoom_effects()
         if self.__mode_effects: self.__apply_mode_effects()
-        print(self.__attrs)
 
     def __apply_zoom_effects(self):
         for sprite in self.sprites:
