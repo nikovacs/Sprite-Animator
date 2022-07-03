@@ -12,6 +12,7 @@ class Sprite:
         self.stretch_y = 1
         self.zoom = 1
         self.color_effect = [1, 1, 1, 1]
+        self.mode = 0
     
     def copy(self) -> "Sprite":
         return Sprite(self.index, self.image, self.x, self.y, self.width, self.height, self.rotation, self.desc)

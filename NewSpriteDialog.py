@@ -86,6 +86,10 @@ class NewSpriteDialog(NewSpriteUI):
         # disable using enter key on the button
         self.add_and_close_btn.setAutoDefault(False)
 
+        self.mode_textbox.setText("0")
+        self.mode_textbox.setValidator(QtGui.QIntValidator(0, 2))
+        self.mode_textbox.textChanged.connect(self.__update_preview)
+
         self.update()
 
     def new_image(self) -> None:
@@ -152,8 +156,7 @@ class NewSpriteDialog(NewSpriteUI):
 
         if np_image[y, x, 3] == 0:  # clicked on transparent pixel (no sprite to be found)
             return
-    
-        
+
         self.__sprite_finder(x, y, np_image, np_pixels_checked)
 
         self.x = self.min_x
@@ -282,6 +285,8 @@ class NewSpriteDialog(NewSpriteUI):
             sprite.stretch_y = float(self.stretchy_textbox.text())
         if self.red.text() != "1" or self.green.text() != "1" or self.blue.text() != "1" or self.alpha.text() != "1":
             sprite.color_effect = (float(self.red.text()), float(self.green.text()), float(self.blue.text()), float(self.alpha.text()))
+        if self.mode_textbox.text() != "":
+            sprite.mode = int(self.mode_textbox.text())
         return sprite
             
     def __draw_on_slicer(self) -> None:
@@ -395,7 +400,6 @@ class NewSpriteDialog(NewSpriteUI):
         @return: the stretched pixmap, but with maintained 0, 0
         """
         if sprite.stretch_x != 1 or sprite.stretch_y != 1:
-            print("STRETCHING")
             wh = max(pixmap.width(), pixmap.height()) * max(abs(sprite.stretch_x), abs(sprite.stretch_y)) * 2
             if wh % 2 == 1: wh += 1
             pixmap = NewSpriteDialog.pad_pixmap(pixmap, abs(pixmap.width() - wh) / 2, abs(pixmap.height() - wh) / 2)
@@ -413,19 +417,64 @@ class NewSpriteDialog(NewSpriteUI):
 
     @staticmethod
     def add_color_effects_to_pixmap(sprite: Sprite, pixmap: QtGui.QPixmap):
-        if sprite.color_effect != [1, 1, 1, 1]:
-            red, green, blue, alpha = sprite.color_effect
-            np_pixmap = NewSpriteDialog.__pixmap_to_numpy(pixmap)  # remember! in BGRA format
-            np_pixmap[:, :, 0] = np_pixmap[:, :, 0] * blue
-            np_pixmap[:, :, 1] = np_pixmap[:, :, 1] * green
-            np_pixmap[:, :, 2] = np_pixmap[:, :, 2] * red
-            np_pixmap[:, :, 3] = np_pixmap[:, :, 3] * (1-alpha)
-            # convert back to RGBA
-            temp_blue, temp_red = copy.deepcopy(np_pixmap[:, :, 0]), np_pixmap[:, :, 2]
-            np_pixmap[:, :, 0] = temp_red
-            np_pixmap[:, :, 2] = temp_blue
-            return NewSpriteDialog.__numpy_to_pixmap(np_pixmap)
+        print(sprite.mode)
+        if sprite.color_effect != [1, 1, 1, 1] or sprite.mode == 2:
+            alpha = sprite.color_effect[3]
+            if (alpha == 1 and sprite.mode != 2) or sprite.mode == 1:
+                pixmap = NewSpriteDialog.__add_color_mode_1(sprite, pixmap)
+            elif alpha != 1 and sprite.mode == 0:
+                pixmap = NewSpriteDialog.__add_color_mode_0(sprite, pixmap)
+            elif sprite.mode == 2:
+                pixmap = NewSpriteDialog.__add_color_mode_2(sprite, pixmap)
         return pixmap
+
+    @staticmethod
+    def __add_color_mode_0(sprite: Sprite, pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
+        grayscale = pixmap.toImage().convertToFormat(QtGui.QImage.Format_Grayscale8)
+        grayscale = QtGui.QPixmap.fromImage(grayscale)
+        np_pixmap = NewSpriteDialog.__pixmap_to_numpy(grayscale)  # remember! in BGRA format
+        red, green, blue, alpha = sprite.color_effect
+        np_pixmap[:, :, 3] = copy.deepcopy(np_pixmap[:, :, 0]) * alpha
+        np_pixmap[:, :, 0] = np_pixmap[:, :, 0] * blue
+        np_pixmap[:, :, 1] = np_pixmap[:, :, 1] * green
+        np_pixmap[:, :, 2] = np_pixmap[:, :, 2] * red
+        # convert back to RGBA
+        temp_blue, temp_red = copy.deepcopy(np_pixmap[:, :, 0]), np_pixmap[:, :, 2]
+        np_pixmap[:, :, 0] = temp_red
+        np_pixmap[:, :, 2] = temp_blue
+        return NewSpriteDialog.__numpy_to_pixmap(np_pixmap)
+
+    @staticmethod
+    def __add_color_mode_1(sprite: Sprite, pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
+        red, green, blue, alpha = sprite.color_effect
+        np_pixmap = NewSpriteDialog.__pixmap_to_numpy(pixmap)  # remember! in BGRA format
+        np_pixmap[:, :, 0] = np_pixmap[:, :, 0] * blue
+        np_pixmap[:, :, 1] = np_pixmap[:, :, 1] * green
+        np_pixmap[:, :, 2] = np_pixmap[:, :, 2] * red
+        np_pixmap[:, :, 3] = np_pixmap[:, :, 3] * alpha
+        # convert back to RGBA
+        temp_blue, temp_red = copy.deepcopy(np_pixmap[:, :, 0]), np_pixmap[:, :, 2]
+        np_pixmap[:, :, 0] = temp_red
+        np_pixmap[:, :, 2] = temp_blue
+        return NewSpriteDialog.__numpy_to_pixmap(np_pixmap)
+
+    @staticmethod
+    def __add_color_mode_2(sprite: Sprite, pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
+        grayscale = pixmap.toImage().convertToFormat(QtGui.QImage.Format_Grayscale8)
+        grayscale = QtGui.QPixmap.fromImage(grayscale)
+        red, green, blue, alpha = sprite.color_effect
+        np_pixmap = NewSpriteDialog.__pixmap_to_numpy(grayscale)  # remember! in BGRA format
+        np_pixmap[:, :, 3] = copy.deepcopy(np_pixmap[:, :, 0]) * alpha
+        np_pixmap[:, :, 0] = np_pixmap[:, :, 0] - np_pixmap[:, :, 0] * blue
+        np_pixmap[:, :, 1] = np_pixmap[:, :, 1] - np_pixmap[:, :, 1] * green
+        np_pixmap[:, :, 2] = np_pixmap[:, :, 2] - np_pixmap[:, :, 2] * red
+        # convert back to RGBA
+        temp_blue, temp_red = copy.deepcopy(np_pixmap[:, :, 0]), np_pixmap[:, :, 2]
+        np_pixmap[:, :, 0] = temp_red
+        np_pixmap[:, :, 2] = temp_blue
+        return NewSpriteDialog.__numpy_to_pixmap(np_pixmap)
+
+
 
     @staticmethod
     def zoom_pixmap(sprite: Sprite, pixmap: QtGui.QPixmap):
