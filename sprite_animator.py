@@ -454,7 +454,10 @@ class Animator_GUI(Ui_MainWindow):
     def __update_attr_image(self, attr: str) -> None:
         attr = attr.upper()
         sprites = [sprite for sprite in self.curr_animation.sprites if sprite.image == attr]
-        for sprite in sprites: NewSpriteDialog.load_and_crop_sprite(self.find_file(sprite.image), sprite)
+        for sprite in sprites:
+            pixmap, x_offset, y_offset = NewSpriteDialog.load_and_crop_sprite(self.find_file(sprite.image), sprite)
+            self.sprite_offsets[sprite.index] = (x_offset, y_offset)
+            self.sprite_images[sprite.index] = pixmap
 
     def __load_sfx_from_ani(self) -> None:
         if self.curr_animation:
