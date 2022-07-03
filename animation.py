@@ -346,8 +346,9 @@ class Animation:
         for attr, value in self.__attrs.items():
             string += f"DEFAULT{attr.upper()} {value}\n" if value else ""
 
-        
         for sprite in self.sprites:
+            if sprite.mode != 0:
+                string += f"EFFECTMODE\t{sprite.index}\t{sprite.mode}\n"
             #color effects
             if sprite.color_effect != [1,1,1,1]:
                 string += f"COLOREFFECT {sprite.index}\t{sprite.color_effect[0]}\t{sprite.color_effect[1]}\t{sprite.color_effect[2]}\t{sprite.color_effect[3]}\n"
