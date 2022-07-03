@@ -53,21 +53,20 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
 
     def mouseMoveEvent(self, event):
         self.setCursor(QtCore.Qt.ClosedHandCursor)
-        orig_pos = event.lastScenePos()
-        updated_pos = event.scenePos()
-        new_pos = self.pos() + updated_pos - orig_pos
+        orig_pos = event.lastScenePos() + QtCore.QPointF(self.__x_offset, self.__y_offset)
+        updated_pos = event.scenePos() + QtCore.QPointF(self.__x_offset, self.__y_offset)
+        new_pos = (self.pos() + QtCore.QPointF(self.__x_offset, self.__y_offset)) + updated_pos - orig_pos
         self.__x, self.__y = new_pos.x(), new_pos.y()
         self.__set_pos()
 
     def mouseReleaseEvent(self, event):
         self.setCursor(QtCore.Qt.OpenHandCursor)
-        self.__x, self.__y = round(self.pos().x()), round(self.pos().y())
+        self.__x, self.__y = round(self.pos().x() + self.__x_offset), round(self.pos().y() + self.__y_offset)
         self.__set_pos()
-        self.__set_new_sprite_pos(self.__old_x, self.__old_y)
+        self.__set_new_sprite_pos()
 
-    def __set_new_sprite_pos(self, old_x: int, old_y: int) -> None:
-        x_diff, y_diff = self.__x - old_x, self.__y - old_y
-        print(f"x_diff: {x_diff}, y_diff: {y_diff}")
+    def __set_new_sprite_pos(self) -> None:
+        x_diff, y_diff = self.__x - self.__old_x, self.__y - self.__old_y
         if x_diff != 0:
             self.parent.shift_sprite("horizontal", x_diff)
         if y_diff != 0:
@@ -114,6 +113,18 @@ class DragSpriteView(QtWidgets.QGraphicsView):
         to click on the main canvas window/sprite
         """
         self.parent.key_press_event(event)
+
+    # on right click, give the options to edit or delete
+    def contextMenuEvent(self, event):
+        menu = QtWidgets.QMenu()
+        edit_action = menu.addAction("Edit")
+        delete_action = menu.addAction("Delete")
+        action = menu.exec_(self.mapToGlobal(event.pos()))
+        if action == edit_action:
+            self.parent.edit_sprite(self.sprite)
+        elif action == delete_action:
+            self.parent.delete_sprite(self.sprite)
+
 
 
 

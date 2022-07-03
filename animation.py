@@ -14,6 +14,8 @@ class Animation:
         self.__stretch_x_effects = {}  # ex. {index: int, stretch: float}
         self.__stretch_y_effects = {}
         self.__color_effects = {}  # ex. {index: int, [R,G,B,A]}
+        self.__zoom_effects = {}  # ex. (index: int, zoom: float)
+        self.__mode_effects = {}  # ex. {index: int, mode: int0-2}
         self.__frames = []
         self.__sprites_list = []
 
@@ -55,6 +57,10 @@ class Animation:
     @property
     def setbackto(self) -> str:
         return self.__setbackto
+
+    def add_sprite(self, sprite: Sprite) -> None:
+        self.__sprites_list = [tmp_sprite for tmp_sprite in self.sprites if tmp_sprite.index != sprite.index]
+        self.__sprites_list.append(sprite)
 
     def add_new_frame(self, index: int, direction="right", frame_from_clipboard=None) -> None:
         """
@@ -100,12 +106,24 @@ class Animation:
                     self.__setbackto = line[1] if len(line) > 1 else ""
                 elif line[0].upper() == "DEFAULTATTR1":
                     self.__attrs["attr1"] = line[1] if len(line) > 1 else "hat0.png"
-                elif line[0].lower() == "DEFAULTHEAD":
+                elif line[0].upper() == "DEFAULTHEAD":
                     self.__attrs["head"] = line[1] if len(line) > 1 else "head19.png"
-                elif line[0].lower() == "DEFAULTBODY":
+                elif line[0].upper() == "DEFAULTBODY":
                     self.__attrs["body"] = line[1] if len(line) > 1 else "body.png"
-                elif line[0].lower() == "DEFAULTSHIELD":
+                elif line[0].upper() == "DEFAULTSHIELD":
                     self.__attrs["shield"] = line[1] if len(line) > 1 else "shield1.png"
+                elif line[0].upper() == "DEFAULTATTR2":
+                    self.__attrs["attr2"] = line[1] if len(line) > 1 else ""
+                elif line[0].upper() == "DEFAULTATTR3":
+                    self.__attrs["attr3"] = line[1] if len(line) > 1 else ""
+                elif line[0].upper() == "DEFAULTATTR12":
+                    self.__attrs["attr12"] = line[1] if len(line) > 1 else ""
+                elif line[0].upper() == "DEFAULTPARAM1":
+                    self.__attrs["param1"] = line[1] if len(line) > 1 else ""
+                elif line[0].upper() == "DEFAULTPARAM2":
+                    self.__attrs["param2"] = line[1] if len(line) > 1 else ""
+                elif line[0].upper() == "DEFAULTPARAM3":
+                    self.__attrs["param3"] = line[1] if len(line) > 1 else ""
                 elif line[0].upper() == "ANI":
                     self.__record_ani = True
                     self.__ani_dir = 0
@@ -124,10 +142,11 @@ class Animation:
                 elif line[0].upper() == "STRETCHYEFFECT":
                     self.__stretch_y_effects[int(line[1])] = float(line[2]) if len(line) > 1 else 1
                 elif line[0].upper() == "COLOREFFECT":
-                    print("COLOR EFFECT")
                     self.__color_effects[int(line[1])] = [float(x) for x in line[2:]]
                 elif line[0].upper() == "ZOOMEFFECT":
-                    pass
+                    self.__zoom_effects[int(line[1])] = float(line[2]) if len(line) > 1 else 1
+                elif line[0].upper() == "EFFECTMODE":
+                    self.__mode_effects[int(line[1])] = int(line[2]) if len(line) > 1 else 0
                 elif self.__record_ani and not self.is_single_dir:
                     self.__generate_frames(line)
                 elif self.__record_ani and self.is_single_dir:
@@ -137,12 +156,16 @@ class Animation:
                 elif self.__is_line_valid_sprite(line):
                     self.__interpret_sprite_line(line[1:])
 
-        if len(self.__rotate_effects) > 0:
-            self.__apply_rotate_effects()
-        if len(self.__stretch_x_effects) > 0 or len(self.__stretch_y_effects) > 0:
-            self.__apply_stretch_effects()
-        if len(self.__color_effects) > 0:
-            self.__apply_color_effects()
+        if self.__rotate_effects: self.__apply_rotate_effects()
+        if self.__stretch_x_effects or self.__stretch_y_effects: self.__apply_stretch_effects()
+        if self.__color_effects: self.__apply_color_effects()
+        if self.__zoom_effects: self.__apply_zoom_effects()
+        if self.__mode_effects: self.__apply_mode_effects()
+
+    def __apply_zoom_effects(self):
+        for sprite in self.sprites:
+            if sprite.index in self.__zoom_effects:
+                sprite.zoom = self.__zoom_effects[sprite.index]
 
     def __apply_stretch_effects(self) -> None:
         for sprite in self.sprites:
@@ -160,6 +183,11 @@ class Animation:
         for sprite in self.sprites:
             if sprite.index in self.__rotate_effects.keys():
                 sprite.rotation = self.__rotate_effects[sprite.index]
+
+    def __apply_mode_effects(self) -> None:
+        for sprite in self.sprites:
+            if sprite.index in self.__mode_effects.keys():
+                sprite.mode = self.__mode_effects[sprite.index]
 
     def __generate_frames_for_single_dir(self, line: list) -> None:
         """
@@ -212,7 +240,7 @@ class Animation:
         if len(line) == 6:
             self.__sprites_list.append(Sprite(*line))
         else:
-            self.__sprites_list.append(Sprite(*line[:6], description=' '.join(line[7:])))
+            self.__sprites_list.append(Sprite(*line[:6], description=' '.join(line[6:])))
 
     def __is_line_valid_sprite(self, line: list) -> bool:
         """
@@ -225,6 +253,11 @@ class Animation:
         if not Animation.__is_pos_or_neg_int(index) or not x.isdigit() or not y.isdigit() or not w.isdigit() or not h.isdigit():
             return False
         return True
+
+    def delete_sprite(self, sprite) -> None:
+        self.__sprites_list.remove(sprite)
+        for frame in self.__frames:
+            frame.delete_sprite(sprite)
 
     @staticmethod
     def __is_pos_or_neg_int(value: str) -> bool:
@@ -257,8 +290,7 @@ class Animation:
         # up, down, left, right
         if self.is_single_dir:
             new_frames = []
-            print(len(self.frames))
-            for i in range(0, len(self.frames), 4): 
+            for i in range(0, len(self.frames), 4):
                 new_frame = copy.deepcopy(self.frames[i])
                 new_frame.set_frame_parts({
                     # does not matter which direction we grab because they should all be pointing to the same frame.
@@ -316,7 +348,6 @@ class Animation:
             string += sprite.to_string() + "\n"
         string += "\n"
 
-        # TODO rotate effects here
         if self.__setbackto:
             string += f"SETBACKTO {self.__setbackto}\n"
 
@@ -327,7 +358,24 @@ class Animation:
         for attr, value in self.__attrs.items():
             string += f"DEFAULT{attr.upper()} {value}\n" if value else ""
 
-        # TODO color effects here
+        for sprite in self.sprites:
+            if sprite.mode != 0:
+                string += f"EFFECTMODE\t{sprite.index}\t{sprite.mode}\n"
+            #color effects
+            if sprite.color_effect != [1,1,1,1]:
+                string += f"COLOREFFECT {sprite.index}\t{sprite.color_effect[0]}\t{sprite.color_effect[1]}\t{sprite.color_effect[2]}\t{sprite.color_effect[3]}\n"
+            #rotate effects
+            if sprite.rotation != 0:
+                string+= f"ROTATEEFFECT {sprite.index}\t{Animation.degrees_to_radians(sprite.rotation)}\n"
+            #zoom effects
+            if sprite.zoom != 1:
+                string += f"ZOOMEFFECT {sprite.index}\t{sprite.zoom}\n"
+            #stretchxeffects
+            if sprite.stretch_x != 1:
+                string += f"STRETCHXEFFECT {sprite.index}\t{sprite.stretch_x}\n"
+            #stretchyeffects
+            if sprite.stretch_y != 1:
+                string += f"STRETCHYEFFECT {sprite.index}\t{sprite.stretch_y}\n"
 
         if len(self.__script) > 0:
             string += "SCRIPT\n"

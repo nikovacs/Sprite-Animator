@@ -6,7 +6,7 @@ class AniGraphicsView(QtWidgets.QGraphicsView):
     """
     def __init__(self, widget, scene_rect_x, scene_rect_y, def_scale):
         """
-        @param scene_rect_x/y: may be specified depending on the type of animation. For Ganis, the values should be -32, 32 respectively.
+        @param scene_rect_x/y: may be specified depending on the type of animation.
         @param def_scale: the default scale of the view
         """
         super().__init__(widget)

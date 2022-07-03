@@ -1,11 +1,7 @@
 import os
 import sys
 import time
-from tempfile import TemporaryDirectory
-
-from PIL import Image
 from PyQt5 import QtCore, QtGui, QtWidgets
-
 from animation import Animation
 from sprite import Sprite
 from draggable import DragImage, DragSpriteView
@@ -26,7 +22,7 @@ class Animator_GUI(Ui_MainWindow):
         self.__init_graphics_view()
 
         self.__init_vars()
-        self.__image_path_map = {} # not in init method because I want it to persist as long as the program is open
+        self.image_path_map = {} # not in init method because I want it to persist as long as the program is open
 
         btns = self.enable_disable_buttons(False)
 
@@ -248,6 +244,10 @@ class Animator_GUI(Ui_MainWindow):
 
     def __set_frame_length(self, length: int or float) -> None:
         if self.curr_animation:
+            length = round(length, 2)
+            length = round(length / 0.05) * 0.05
+            if length < 0.05: length = 0.05
+            self.length_textbox.setText(str(length))
             self.get_current_frame().set_length(length)
 
     def __do_sprite_combo_changed_event(self):
@@ -345,7 +345,7 @@ class Animator_GUI(Ui_MainWindow):
         event.accept()
 
     def __delete_curr_sprite(self) -> None:
-        if self.curr_animation and self.curr_sprite and self.curr_sprite >= 0:
+        if self.curr_animation and self.curr_sprite is not None and self.curr_sprite >= 0:
             self.get_current_frame_part().list_of_sprites.pop(self.curr_sprite)
             self.curr_sprite = -1 if len(self.get_current_frame_part().list_of_sprites) > 0 else None
             self.__display_current_frame()
@@ -443,6 +443,13 @@ class Animator_GUI(Ui_MainWindow):
             self.__set_frame_slider()
             self.__update_sfx_textbox()
             self.__play_frame_sfx()
+    
+    def add_sprite_to_scroll_area(self, sprite: Sprite) -> None:
+        self.curr_animation.add_sprite(sprite)
+        pixmap, x_offset, y_offset = NewSpriteDialog.load_and_crop_sprite(self.image_path_map[sprite.index], sprite)
+        self.sprite_offsets[sprite.index] = (x_offset, y_offset)
+        self.sprite_images[sprite.index] = pixmap
+        self.__init_scroll_area()
 
     def __play_frame_sfx(self) -> None:
         if sfx := self.get_current_frame().sfx:
@@ -451,8 +458,10 @@ class Animator_GUI(Ui_MainWindow):
     def __update_attr_image(self, attr: str) -> None:
         attr = attr.upper()
         sprites = [sprite for sprite in self.curr_animation.sprites if sprite.image == attr]
-        with TemporaryDirectory() as temp_dir:
-            for sprite in sprites: self.__load_and_crop_sprite(self.find_file(sprite.image), sprite, temp_dir)
+        for sprite in sprites:
+            pixmap, x_offset, y_offset = NewSpriteDialog.load_and_crop_sprite(self.find_file(sprite.image), sprite)
+            self.sprite_offsets[sprite.index] = (x_offset, y_offset)
+            self.sprite_images[sprite.index] = pixmap
 
     def __load_sfx_from_ani(self) -> None:
         if self.curr_animation:
@@ -467,55 +476,22 @@ class Animator_GUI(Ui_MainWindow):
 
     def __load_sprites_from_ani(self):
         if self.curr_animation and len(self.curr_animation.sprites) > 0:
-            with TemporaryDirectory() as tempdir:
-                for sprite in self.curr_animation.sprites:
-                    image_path = self.find_file(sprite.image)
-                    if image_path:
-                        self.__load_and_crop_sprite(image_path, sprite, tempdir)
-                    else:
-                        self.__make_default_sprite_img(sprite)
-
-    def __make_default_sprite_img(self, sprite):
-        self.sprite_images[sprite.index] = QtGui.QPixmap(sprite.width, sprite.height)
-
-    def __load_and_crop_sprite(self, image_path, sprite, tempdir):
-        """
-        This method is intended to be called from within a with TemporaryDirectory() block.
-        """
-        if image_path:
-            image = Image.open(image_path)
-            image = image.crop((sprite.x, sprite.y, sprite.x + sprite.width, sprite.y + sprite.height))
-            # TODO add stretch effects color effects.
-            image.save(os.path.join(tempdir, f"{sprite.index}.png"))
-            original_pixmap = QtGui.QPixmap(os.path.join(tempdir, f"{sprite.index}.png"))
-            pixmap = NewSpriteDialog.rotate_pixmap(sprite, original_pixmap)
-            pixmap = NewSpriteDialog.stretch_pixmap(sprite, pixmap)
-            pixmap = NewSpriteDialog.add_color_effects_to_pixmap(sprite, pixmap)
-            self.sprite_images[sprite.index] = pixmap
-            self.__generate_offsets(sprite, original_pixmap, pixmap)
-        else:
-            self.__make_default_sprite_img(sprite)
-
-    def __generate_offsets(self, sprite: Sprite, original_pixmap: QtGui.QPixmap, pixmap: QtGui.QPixmap) -> None:
-        """
-        This method is called after modifying the sprite pixmap...
-        Such as, rotating, zooming, stretching, or anything else that changes the size of the pixmap.
-        @param sprite: Sprite object of the corresponding pixmap. Needed for its attributes (specifically index).
-        @param original_pixmap: The original pixmap before any modifications.
-        @param pixmap: The pixmap after modifications.
-        """
-        self.sprite_offsets[sprite.index] = (abs(original_pixmap.width() / 2 - pixmap.width() / 2),
-                                             abs(original_pixmap.height() / 2 - pixmap.height() / 2))
+            for sprite in self.curr_animation.sprites:
+                image_path = self.find_file(sprite.image)
+                pixmap, x_offset, y_offset = NewSpriteDialog.load_and_crop_sprite(image_path, sprite)
+                if x_offset or y_offset:
+                    self.sprite_offsets[sprite.index] = (x_offset, y_offset)
+                self.sprite_images[sprite.index] = pixmap
 
     def find_file(self, file_name):
-        if file_name in self.__image_path_map:
-            return self.__image_path_map[file_name]
+        if file_name in self.image_path_map:
+            return self.image_path_map[file_name]
         for root, dirs, files in os.walk(r"C:\Users\kovac\Graal"):  # TODO TEMP HARD CODED TO MY GAME FOLDER, CHANGE TO "."
             for file in files:
                 if file.split(".")[0].lower() == file_name or file.lower() == file_name:
-                    self.__image_path_map[file_name] = os.path.join(root, file)
+                    self.image_path_map[file_name] = os.path.join(root, file)
                     return os.path.join(root, file)
-        file_name = file_name.upper()  # TODO: make these already be in self.__image_path_map from start.
+        file_name = file_name.upper()  # TODO: make these already be in self.image_path_map from start.
         if file_name == "SPRITES":
             return self.find_file("sprites.png")
         elif file_name == "SHIELD":
@@ -592,7 +568,12 @@ class Animator_GUI(Ui_MainWindow):
 
             for index, image in sorted(self.sprite_images.items(), key=lambda x: x[0]):
                 im_view = DragSpriteView(self, image, index, self.curr_animation.sprites)
-                im_view.mouseReleaseEvent = lambda e, i=index: self.__add_sprite_to_frame_part(i)
+                im_view.mouseReleaseEvent = lambda e, i=index: self.__drag_sprite_view_mouse_event(e, i)
+
+    def __drag_sprite_view_mouse_event(self, event, i) -> None:
+        # make sure the event is a left mouse release event
+        if event.button() == QtCore.Qt.LeftButton:
+            self.__add_sprite_to_frame_part(i)
 
     def __add_sprite_to_frame_part(self, index: int) -> None:
         """
@@ -626,6 +607,25 @@ class Animator_GUI(Ui_MainWindow):
         if 0 <= layer < len(self.get_current_frame_part().list_of_sprites):
             self.curr_sprite = layer
             self.__update_sprite_textboxes()
+
+    def delete_sprite(self, sprite: Sprite) -> None:
+        """
+        Delete the provided sprite from the sprite scroll area and animation
+        """
+        if self.curr_animation:
+            self.curr_animation.delete_sprite(sprite)
+            del self.sprite_images[sprite.index]
+            if sprite.index in self.sprite_offsets:
+                del self.sprite_offsets[sprite.index]
+            self.__init_scroll_area()
+            self.__display_current_frame()
+
+    def edit_sprite(self, sprite: Sprite) -> None:
+        """
+        Edit the provided sprite in the sprite scroll area and animation
+        """
+        if self.curr_animation:
+            self.__add_new_sprite(sprite)
 
     def get_current_frame_part(self):
         """
@@ -661,27 +661,16 @@ class Animator_GUI(Ui_MainWindow):
         self.curr_dir = self.dir_combo_box.currentText().lower()
         self.__display_current_frame()
 
-    def __add_new_sprite(self) -> None:
+    def __add_new_sprite(self, from_sprite: Sprite) -> None:
         """
         Creates a new window that allows the user to create a new sprite
         """
         if self.curr_animation:
             new_sprite_window = QtWidgets.QDialog()
-            new_sprite_ui = NewSpriteDialog(self, new_sprite_window)
+            NewSpriteDialog(self, new_sprite_window, from_sprite)
             new_sprite_window.setStyleSheet(self.MainWindow.styleSheet())
             new_sprite_window.exec_()
-
-            # new_sprite_window.new_sprite_image_combobox
-            # new_sprite_window.new_sprite_custom_img_textbox
-            # new_sprite_window.new_sprite_description_textbox
-            # new_sprite_window.new_sprite_x_coord_textbox
-            # new_sprite_window.new_sprite_y_coord_textbox
-            # new_sprite_window.new_sprite_width_textbox
-            # new_sprite_window.new_sprite_height_textbox
-            # new_sprite_window.add_sprite_btn
-
-        # link add_sprite_btn to add_sprite_to_current_frame method
-        # TODO:
+            self.__display_current_frame()
 
     def __change_background_color(self) -> None:
         """
