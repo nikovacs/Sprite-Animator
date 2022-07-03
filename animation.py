@@ -106,12 +106,24 @@ class Animation:
                     self.__setbackto = line[1] if len(line) > 1 else ""
                 elif line[0].upper() == "DEFAULTATTR1":
                     self.__attrs["attr1"] = line[1] if len(line) > 1 else "hat0.png"
-                elif line[0].lower() == "DEFAULTHEAD":
+                elif line[0].upper() == "DEFAULTHEAD":
                     self.__attrs["head"] = line[1] if len(line) > 1 else "head19.png"
-                elif line[0].lower() == "DEFAULTBODY":
+                elif line[0].upper() == "DEFAULTBODY":
                     self.__attrs["body"] = line[1] if len(line) > 1 else "body.png"
-                elif line[0].lower() == "DEFAULTSHIELD":
+                elif line[0].upper() == "DEFAULTSHIELD":
                     self.__attrs["shield"] = line[1] if len(line) > 1 else "shield1.png"
+                elif line[0].upper() == "DEFAULTATTR2":
+                    self.__attrs["attr2"] = line[1] if len(line) > 1 else ""
+                elif line[0].upper() == "DEFAULTATTR3":
+                    self.__attrs["attr3"] = line[1] if len(line) > 1 else ""
+                elif line[0].upper() == "DEFAULTATTR12":
+                    self.__attrs["attr12"] = line[1] if len(line) > 1 else ""
+                elif line[0].upper() == "DEFAULTPARAM1":
+                    self.__attrs["param1"] = line[1] if len(line) > 1 else ""
+                elif line[0].upper() == "DEFAULTPARAM2":
+                    self.__attrs["param2"] = line[1] if len(line) > 1 else ""
+                elif line[0].upper() == "DEFAULTPARAM3":
+                    self.__attrs["param3"] = line[1] if len(line) > 1 else ""
                 elif line[0].upper() == "ANI":
                     self.__record_ani = True
                     self.__ani_dir = 0
@@ -149,6 +161,7 @@ class Animation:
         if self.__color_effects: self.__apply_color_effects()
         if self.__zoom_effects: self.__apply_zoom_effects()
         if self.__mode_effects: self.__apply_mode_effects()
+        print(self.__attrs)
 
     def __apply_zoom_effects(self):
         for sprite in self.sprites:
