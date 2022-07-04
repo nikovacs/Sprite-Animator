@@ -92,8 +92,8 @@ class FramePart:
         @param y: The new y coordinate of the sprite
         """
         sprite, old_x, old_y = self.list_of_sprites_xs_ys[layer]
-        if not x: x = old_x
-        if not y: y = old_y
+        if not isinstance(x, int): x = old_x
+        if not isinstance(y, int): y = old_y
         self.list_of_sprites_xs_ys[layer] = (sprite, x, y)
 
     def shift(self, layer: int, direction: str, amount=1) -> None:
