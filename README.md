@@ -24,3 +24,8 @@
 #### If there are any issues:
 - Please contact me or post an issue [here](https://github.com/nikovacs/sprite-animator/issues)
 
+
+### NOTE:
+This version is unstable. Doing silly things will probably cause it to crash.
+For example, do not be excessive on the zooming or it will probably crash and you will lose your progress.
+
