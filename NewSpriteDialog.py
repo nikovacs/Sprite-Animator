@@ -167,6 +167,7 @@ class NewSpriteDialog(NewSpriteUI):
         self.__update_sprite_dimensions_textboxes()
 
     def __sprite_finder(self, x: int, y: int, image: np.ndarray, pixels_checked: np.ndarray, count) -> None:
+        print(count)
         """
         Recursive method to find the max and min x y coordinates of a clicked sprite
         @param x: x coordinate
@@ -174,7 +175,7 @@ class NewSpriteDialog(NewSpriteUI):
         @param image: numpy array of the image
         @param pixels_checked: numpy array of the pixels that have been checked (all zeros by default) (1 for checked) (same shape as image)0
         """
-        if count > max(image.shape) * 8: return
+        if count > 1200: return
         # get coordinates of all surrounding pixels, including diagonals
         surrounding_pixels = [(x + 1, y), (x + 1, y + 1), (x, y + 1), (x - 1, y + 1), (x - 1, y), (x-1, y - 1), (x, y - 1), (x + 1, y - 1)]
 
@@ -322,7 +323,7 @@ class NewSpriteDialog(NewSpriteUI):
         self.height_textbox.setText(str(self.h))
 
     def add_sprite_to_animator(self, sprite: Sprite) -> None:
-        self.animator.image_path_map[sprite.index] = self.image_file
+        self.animator.file_path_map[sprite.index] = self.image_file
         self.animator.add_sprite_to_scroll_area(sprite)
 
     def __add_and_continue(self) -> None:
