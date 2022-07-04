@@ -167,7 +167,6 @@ class NewSpriteDialog(NewSpriteUI):
         self.__update_sprite_dimensions_textboxes()
 
     def __sprite_finder(self, x: int, y: int, image: np.ndarray, pixels_checked: np.ndarray, count) -> None:
-        print(count)
         """
         Recursive method to find the max and min x y coordinates of a clicked sprite
         @param x: x coordinate
