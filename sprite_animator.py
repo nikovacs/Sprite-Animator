@@ -4,7 +4,7 @@ import time
 from PyQt5 import QtCore, QtGui, QtWidgets
 from animation import Animation
 from sprite import Sprite
-from draggable import DragImage, DragSpriteView
+from draggable import DragImage, DragSpriteView, SfxImage
 from new_sprite_ui import Ui_Dialog as NewSpriteDialog
 from scene import AniGraphicsView
 from ui import Ui_MainWindow
@@ -22,7 +22,7 @@ class Animator_GUI(Ui_MainWindow):
         self.__init_graphics_view()
 
         self.__init_vars()
-        self.image_path_map = {} # not in init method because I want it to persist as long as the program is open
+        self.file_path_map = {} # not in init method because I want it to persist as long as the program is open
 
         btns = self.enable_disable_buttons(False)
 
@@ -128,9 +128,12 @@ class Animator_GUI(Ui_MainWindow):
             self.get_current_frame().set_sfx(sfx)
             self.__display_current_frame()
 
-    def __update_sfx_textbox(self):
+    def __clear_sfx_textbox(self) -> None:
+        self.sound_textbox.setText("")
+
+    def update_sfx_textbox(self, sfx_num: int) -> None:
         if self.curr_animation:
-            self.sound_textbox.setText(self.get_current_frame().sfx)
+            self.sound_textbox.setText(self.get_current_frame().sfxs[sfx_num][0])
 
     def __set_attr(self, attr: str, value: str) -> None:
         if self.curr_animation:
@@ -182,7 +185,7 @@ class Animator_GUI(Ui_MainWindow):
         # acts as an index in an iterable. Ex. -1 can mean upper-most layer
         self.sprite_images = {}  # index: QPixmap
         self.sprite_offsets = {}  # index: (x_offset, y_offset) for adjusted sprite images which are no longer their original sizes
-        self.__sfx_dict = {}  # file: pygame.mixer.Sound object
+        self.__sfx_dict = {}  # {sfx_file.wav: pygame.mixer.Sound)}
         self.__clipboard = None
         self.time_label.setText("0.00")
         self.__listen = False
@@ -430,8 +433,10 @@ class Animator_GUI(Ui_MainWindow):
 
     def __display_current_frame(self) -> None:
         if self.curr_animation:
-            if self.get_current_frame().sfx != "" and self.get_current_frame().sfx not in self.__sfx_dict:
-                self.__load_sfx_from_ani()
+            if self.get_current_frame().sfxs:
+                for sfx, _, _ in self.get_current_frame().sfxs:
+                    if sfx not in self.__sfx_dict:
+                        self.__load_sfx_from_ani()
             self.curr_sprite = self.curr_sprite if self.curr_sprite is None or 0 <= self.curr_sprite < len(self.get_current_frame_part().list_of_sprites) else -1
             self.__correct_current_sprite()
             self.__prepare_graphics_view()
@@ -439,21 +444,34 @@ class Animator_GUI(Ui_MainWindow):
                 offsets = self.sprite_offsets.get(sprite.index)
                 x_offset, y_offset = offsets if offsets else (0, 0)
                 self.__graphics_view.scene.addItem(DragImage(self, sprite, i, x, y, x_offset, y_offset))
+            for i, (sfx, x, y) in enumerate(self.get_current_frame().sfxs):
+                print(i, sfx, x, y)
+                self.__graphics_view.scene.addItem(SfxImage(self, sfx, self.__sfx_dict[sfx], x, y, i))
             self.__update_sprite_textboxes()
             self.__set_frame_slider()
-            self.__update_sfx_textbox()
             self.__play_frame_sfx()
+            self.__clear_sfx_textbox()
+
+    def change_sfx_pos(self, sfx_index: int, x: int, y: int) -> None:
+        self.get_current_frame().change_sfx_pos(sfx_index, x, y)
+        self.__display_current_frame()
+
+    def delete_sfx(self, sfx_index: int) -> None:
+        self.get_current_frame().delete_sfx(sfx_index)
+        self.__display_current_frame()
     
     def add_sprite_to_scroll_area(self, sprite: Sprite) -> None:
         self.curr_animation.add_sprite(sprite)
-        pixmap, x_offset, y_offset = NewSpriteDialog.load_and_crop_sprite(self.image_path_map[sprite.index], sprite)
+        pixmap, x_offset, y_offset = NewSpriteDialog.load_and_crop_sprite(self.file_path_map[sprite.index], sprite)
         self.sprite_offsets[sprite.index] = (x_offset, y_offset)
         self.sprite_images[sprite.index] = pixmap
         self.__init_scroll_area()
 
     def __play_frame_sfx(self) -> None:
-        if sfx := self.get_current_frame().sfx:
-            if self.__sfx_dict[sfx]: self.__sfx_dict[sfx].play()
+        if sfxs := self.get_current_frame().sfxs:
+            for sfx, _, _ in sfxs:
+                if pygame_sfx := self.__sfx_dict[sfx]:
+                    pygame_sfx.play()
 
     def __update_attr_image(self, attr: str) -> None:
         attr = attr.upper()
@@ -465,14 +483,11 @@ class Animator_GUI(Ui_MainWindow):
 
     def __load_sfx_from_ani(self) -> None:
         if self.curr_animation:
-            for sfx in (sfxs := [frame.sfx for frame in self.curr_animation.frames if frame.sfx]):
-                if sfx and sfx not in self.__sfx_dict.keys():
-                    sfx_path = self.find_file(sfx)
-                    self.__sfx_dict[sfx] = pygame.mixer.Sound(sfx_path) if sfx_path else None
-            # remove any old sfxs from the dictionary
-            for sfx in self.__sfx_dict.keys():
-                if sfx not in sfxs:
-                    del self.__sfx_dict[sfx]
+            for frame in self.curr_animation.frames:
+                for sfx, x, y in frame.sfxs:
+                    if sfx and sfx not in self.__sfx_dict.keys():
+                        sfx_path = self.find_file(sfx)
+                        self.__sfx_dict[sfx] = pygame.mixer.Sound(sfx_path) if sfx_path else None
 
     def __load_sprites_from_ani(self):
         if self.curr_animation and len(self.curr_animation.sprites) > 0:
@@ -483,15 +498,15 @@ class Animator_GUI(Ui_MainWindow):
                     self.sprite_offsets[sprite.index] = (x_offset, y_offset)
                 self.sprite_images[sprite.index] = pixmap
 
-    def find_file(self, file_name):
-        if file_name in self.image_path_map:
-            return self.image_path_map[file_name]
+    def find_file(self, file_name: str):
+        if file_name in self.file_path_map:
+            return self.file_path_map[file_name]
         for root, dirs, files in os.walk(r"C:\Users\kovac\Graal"):  # TODO TEMP HARD CODED TO MY GAME FOLDER, CHANGE TO "."
             for file in files:
                 if file.split(".")[0].lower() == file_name or file.lower() == file_name:
-                    self.image_path_map[file_name] = os.path.join(root, file)
+                    self.file_path_map[file_name] = os.path.join(root, file)
                     return os.path.join(root, file)
-        file_name = file_name.upper()  # TODO: make these already be in self.image_path_map from start.
+        file_name = file_name.upper()  # TODO: make these already be in self.file_path_map from start.
         if file_name == "SPRITES":
             return self.find_file("sprites.png")
         elif file_name == "SHIELD":

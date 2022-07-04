@@ -1,3 +1,4 @@
+import pygame.mixer
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
@@ -77,6 +78,62 @@ class DragImage(QtWidgets.QGraphicsPixmapItem):
 
     def __set_pos(self) -> None:
         self.setPos(self.real_x, self.real_y)
+
+
+class SfxImage(QtWidgets.QGraphicsPixmapItem):
+    """
+    Subclass of QGraphicsPixmapItem for displaying sfx on the frame view
+    """
+    def __init__(self, parent, sfx_name: str, sfx_to_play: pygame.mixer.Sound, x=0, y=0, sfx_num=0):
+        super().__init__(QtGui.QPixmap(parent.find_file("soundicon.png")))
+        self.parent = parent
+        self.sfx_name = sfx_name
+        self.sfx_to_play = sfx_to_play
+        self.__x, self.__y = x, y
+        self.__old_x, self.__old_y = x, y
+        self.sfx_num = sfx_num
+        self.setAcceptHoverEvents(True)
+        self.setPos(self.__x, self.__y)
+
+    @property
+    def x(self):
+        return self.__x
+
+    @property
+    def x(self):
+        return self.__y
+
+    def hoverEnterEvent(self, event):
+        self.setCursor(QtCore.Qt.OpenHandCursor)
+
+    def hoverLeaveEvent(self, event):
+        self.setCursor(QtCore.Qt.ArrowCursor)
+
+    def mousePressEvent(self, event):
+        self.__old_x, self.__old_y = self.__x, self.__y
+        self.setCursor(QtCore.Qt.ClosedHandCursor)
+        self.parent.update_sfx_textbox(self.sfx_num)
+
+    def mouseMoveEvent(self, event):
+        self.setCursor(QtCore.Qt.ClosedHandCursor)
+        orig_pos = event.lastScenePos()
+        updated_pos = event.scenePos()
+        new_pos = self.pos() + updated_pos - orig_pos
+        self.__x, self.__y = new_pos.x(), new_pos.y()
+        self.setPos(self.__x, self.__y)
+
+    def mouseReleaseEvent(self, event):
+        self.setCursor(QtCore.Qt.OpenHandCursor)
+        self.__x, self.__y = round(self.pos().x()), round(self.pos().y())
+        self.setPos(self.__x, self.__y)
+        if (self.__x, self.__y) != (self.__old_x, self.__old_y):
+            self.parent.change_sfx_pos(self.sfx_num, self.__x, self.__y)
+
+    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
+        if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
+            self.parent.delete_sfx(self.sfx_num)
+        else:
+            super().keyPressEvent(event)
 
 
 class DragSpriteView(QtWidgets.QGraphicsView):

@@ -13,14 +13,14 @@ class Frame:
             "right": FramePart()
         }
         self.__length = 0.05
-        self.__sfxs = {} # {file: (x, y)}
+        self.__sfxs = [] # (file, x, y)
 
     @property
     def length(self) -> float:
         return self.__length
 
     @property
-    def sfx(self) -> str:
+    def sfxs(self) -> list:
         return self.__sfxs
             
     @property
@@ -35,7 +35,7 @@ class Frame:
             self.frame_parts[key] = values[::-1]
     
     def add_sfx(self, sfx: list) -> None:
-        self.__sfxs[sfx[0]] = (float(sfx[1]), float(sfx[2]))
+        self.__sfxs.append((sfx[0], float(sfx[1])*16, float(sfx[2])*16))
 
     def set_length(self, length: float) -> None:
         self.__length = length if length >= 0.05 else 0.05
@@ -47,6 +47,13 @@ class Frame:
     def delete_sprite(self, sprite: Sprite) -> None:
         for frame_part in self.frame_parts.values():
             frame_part.delete_sprite(sprite)
+
+    def change_sfx_pos(self, sfx_index: int, x: int, y: int) -> None:
+        self.__sfxs[sfx_index] = (self.__sfxs[sfx_index][0], x, y)
+
+    def delete_sfx(self, sfx_index: int) -> None:
+        self.__sfxs.pop(sfx_index)
+
 
 class FramePart:
     """
