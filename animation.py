@@ -337,7 +337,7 @@ class Animation:
         """
         with open(file_name, "w") as f:
             f.write(self.to_string())
-        
+
     def to_string(self) -> str:
         """
         @return the string representation of the animation
@@ -391,7 +391,9 @@ class Animation:
                 string += frame_part.to_string() + "\n"
                 if self.is_single_dir:
                     break
-            string += f"PLAYSOUND {frame.sfx}" if frame.sfx else ""
+            for sfx in frame.sfxs:
+                if sfx[0]:
+                    string += f"PLAYSOUND\t{sfx[0]}\t{sfx[1]/16.}\t{sfx[2]/16.}\n"
             string += f"WAIT {int((frame.length / 0.05)-1)}\n" if frame.length > 0.05 else "\n"
             string += "\n"
         string = string[:-1]
