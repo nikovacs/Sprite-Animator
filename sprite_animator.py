@@ -123,9 +123,18 @@ class Animator_GUI(Ui_MainWindow):
         # link sound textbox
         self.sound_textbox.returnPressed.connect(lambda: self.__set_sfx(self.sound_textbox.text().strip()))
 
+        # link sound button
+        self.plus_sound_btn.clicked.connect(lambda: self.__add_sfx())
+
+    def __add_sfx(self):
+        self.sound_textbox.setText("")
+        self.get_current_frame().add_sfx()
+        self.last_sfx_num = -1
+        self.__display_current_frame()
+
     def __set_sfx(self, sfx):
-        if self.curr_animation:
-            self.get_current_frame().set_sfx(sfx)
+        if self.curr_animation and self.last_sfx_num:
+            self.get_current_frame().set_sfx(sfx, self.last_sfx_num)
             self.__display_current_frame()
 
     def __clear_sfx_textbox(self) -> None:
@@ -189,6 +198,7 @@ class Animator_GUI(Ui_MainWindow):
         self.__clipboard = None
         self.time_label.setText("0.00")
         self.__listen = False
+        self.last_sfx_num = None
 
     @property
     def __ani_length(self) -> int:
@@ -445,8 +455,7 @@ class Animator_GUI(Ui_MainWindow):
                 x_offset, y_offset = offsets if offsets else (0, 0)
                 self.__graphics_view.scene.addItem(DragImage(self, sprite, i, x, y, x_offset, y_offset))
             for i, (sfx, x, y) in enumerate(self.get_current_frame().sfxs):
-                print(i, sfx, x, y)
-                self.__graphics_view.scene.addItem(SfxImage(self, sfx, self.__sfx_dict[sfx], x, y, i))
+                self.__graphics_view.scene.addItem(SfxImage(self, sfx, self.__sfx_dict.get(sfx, None), x, y, i))
             self.__update_sprite_textboxes()
             self.__set_frame_slider()
             self.__play_frame_sfx()
@@ -470,7 +479,7 @@ class Animator_GUI(Ui_MainWindow):
     def __play_frame_sfx(self) -> None:
         if sfxs := self.get_current_frame().sfxs:
             for sfx, _, _ in sfxs:
-                if pygame_sfx := self.__sfx_dict[sfx]:
+                if pygame_sfx := self.__sfx_dict.get(sfx, None):
                     pygame_sfx.play()
 
     def __update_attr_image(self, attr: str) -> None:

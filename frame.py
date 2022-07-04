@@ -34,8 +34,14 @@ class Frame:
         for key, values in self.frame_parts.items():
             self.frame_parts[key] = values[::-1]
     
-    def add_sfx(self, sfx: list) -> None:
-        self.__sfxs.append((sfx[0], float(sfx[1])*16, float(sfx[2])*16))
+    def add_sfx(self, sfx: list = None) -> None:
+        if sfx:
+            self.__sfxs.append((sfx[0], float(sfx[1])*16, float(sfx[2])*16))
+        else:
+            self.__sfxs.append(("", 0, 0))
+
+    def set_sfx(self, sfx: str, sfx_index: int) -> None:
+        self.__sfxs[sfx_index] = (sfx, self.__sfxs[sfx_index][1], self.__sfxs[sfx_index][2])
 
     def set_length(self, length: float) -> None:
         self.__length = length if length >= 0.05 else 0.05

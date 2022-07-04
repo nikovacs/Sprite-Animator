@@ -113,6 +113,7 @@ class SfxImage(QtWidgets.QGraphicsPixmapItem):
         self.__old_x, self.__old_y = self.__x, self.__y
         self.setCursor(QtCore.Qt.ClosedHandCursor)
         self.parent.update_sfx_textbox(self.sfx_num)
+        self.parent.last_sfx_num = self.sfx_num
 
     def mouseMoveEvent(self, event):
         self.setCursor(QtCore.Qt.ClosedHandCursor)
