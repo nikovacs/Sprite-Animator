@@ -12,7 +12,6 @@ from ui import Ui_MainWindow
 from NewSpriteDialog import NewSpriteDialog
 import pygame
 
-
 class Animator_GUI(Ui_MainWindow):
     def __init__(self, MainWindow) -> None:
         super().__init__()
@@ -522,7 +521,7 @@ class Animator_GUI(Ui_MainWindow):
     def find_file(self, file_name: str):
         if file_name in self.file_path_map:
             return self.file_path_map[file_name]
-        for root, dirs, files in os.walk(r"C:\Users\kovac\Graal"):  # TODO TEMP HARD CODED TO MY GAME FOLDER, CHANGE TO "."
+        for root, dirs, files in os.walk("."):
             for file in files:
                 if file.split(".")[0].lower() == file_name or file.lower() == file_name:
                     self.file_path_map[file_name] = os.path.join(root, file)
@@ -725,8 +724,7 @@ class Animator_GUI(Ui_MainWindow):
         Displays a QFileDialog to get a gani file
         """
         file = QtWidgets.QFileDialog.getOpenFileName(None, "Open Gani File",
-                                                     os.path.normpath('E:\Downloads\ganis\ganis'),
-                                                     "Gani Files (*.gani)")
+                                                     os.path.normpath('./levels/ganis'), "Gani Files (*.gani)")
         return file[0]
 
 
