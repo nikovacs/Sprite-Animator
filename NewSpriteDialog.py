@@ -188,17 +188,6 @@ class NewSpriteDialog(NewSpriteUI):
             if self.min_y is None or y < self.min_y: self.min_y = y
             self.__sprite_finder(x, y, image, pixels_checked, count + 1)
 
-    # def __sprite_finder(self, x: int, y: int, image: np.ndarray) -> None:
-    #     """
-    #     Recursive method to find the max and min x y coordinates of a clicked sprite
-    #     @param x: x coordinate
-    #     @param y: y coordinate
-    #     @param image: numpy array of the image
-    #     @param pixels_checked: numpy array of the pixels that have been checked (all zeros by default) (1 for checked) (same shape as image)0
-    #     """
-    #     np_pixels_checked = np.zeros(image.shape[:-1], dtype=np.uint8)
-
-
     def __init_vars(self):
         image = self.from_sprite.image if self.from_sprite else "SPRITES"
         self.image_combobox.lineEdit().setText(image)
