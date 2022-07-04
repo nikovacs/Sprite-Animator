@@ -278,13 +278,12 @@ class Animator_GUI(Ui_MainWindow):
         @param enable: True to enable, False to disable
         """
         lst_btns = [
+            self.plus_sound_btn,
             self.save_btn,
             self.saveas_btn,
             self.undo_btn,
             self.redo_btn,
             self.plus_sprite_btn,
-            self.minus_unused_btn,
-            self.import_btn,
             self.reverse_btn,
             self.plus_layer_btn,
             self.minus_layer_btn,
@@ -327,6 +326,11 @@ class Animator_GUI(Ui_MainWindow):
 
         [btn.setEnabled(enable) for btn in lst_btns]
         [other.setEnabled(enable) for other in others]
+
+        # these buttons are not yet implemented
+        self.import_btn.setEnabled(False)
+        self.minus_unused_btn.setEnabled(False)
+
         return lst_btns  # return the things we want to change the keyPressEvent of
 
     def __init_graphics_view(self):
@@ -676,7 +680,8 @@ class Animator_GUI(Ui_MainWindow):
         Reverses the order of the frames in the current animation
         """
         if self.curr_animation:
-            pass
+            self.curr_animation.reverse_frames()
+            self.__display_current_frame()
 
     def __save_animation_as(self) -> None:
         if self.curr_animation:
