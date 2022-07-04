@@ -13,9 +13,6 @@ class Sprite:
         self.zoom = 1
         self.color_effect = [1, 1, 1, 1]
         self.mode = 0
-    
-    def copy(self) -> "Sprite":
-        return Sprite(self.index, self.image, self.x, self.y, self.width, self.height, self.rotation, self.desc)
 
     def to_string(self) -> str:
         return f"SPRITE\t{self.index}\t{self.image}\t{self.x}\t{self.y}\t{self.width}\t{self.height}\t{self.desc}"
