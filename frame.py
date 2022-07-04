@@ -170,6 +170,6 @@ class FramePart:
         """
         out = ""
         for sprite, x, y in self.list_of_sprites_xs_ys:
-            out += f"\t{sprite.index}\t{x}\t{y},"
+            out += f" {sprite.index} {x} {y},"
         return out[:-1]
 

@@ -15,4 +15,4 @@ class Sprite:
         self.mode = 0
 
     def to_string(self) -> str:
-        return f"SPRITE\t{self.index}\t{self.image}\t{self.x}\t{self.y}\t{self.width}\t{self.height}\t{self.desc}"
+        return f"SPRITE {self.index} {self.image} {self.x} {self.y} {self.width} {self.height} {self.desc}"

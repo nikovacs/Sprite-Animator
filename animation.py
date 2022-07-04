@@ -360,22 +360,22 @@ class Animation:
 
         for sprite in self.sprites:
             if sprite.mode != 0:
-                string += f"EFFECTMODE\t{sprite.index}\t{sprite.mode}\n"
+                string += f"EFFECTMODE {sprite.index} {sprite.mode}\n"
             #color effects
             if sprite.color_effect != [1,1,1,1]:
-                string += f"COLOREFFECT {sprite.index}\t{sprite.color_effect[0]}\t{sprite.color_effect[1]}\t{sprite.color_effect[2]}\t{sprite.color_effect[3]}\n"
+                string += f"COLOREFFECT {sprite.index} {sprite.color_effect[0]} {sprite.color_effect[1]} {sprite.color_effect[2]} {sprite.color_effect[3]}\n"
             #rotate effects
             if sprite.rotation != 0:
-                string+= f"ROTATEEFFECT {sprite.index}\t{Animation.degrees_to_radians(sprite.rotation)}\n"
+                string+= f"ROTATEEFFECT {sprite.index} {Animation.degrees_to_radians(sprite.rotation)}\n"
             #zoom effects
             if sprite.zoom != 1:
-                string += f"ZOOMEFFECT {sprite.index}\t{sprite.zoom}\n"
+                string += f"ZOOMEFFECT {sprite.index} {sprite.zoom}\n"
             #stretchxeffects
             if sprite.stretch_x != 1:
-                string += f"STRETCHXEFFECT {sprite.index}\t{sprite.stretch_x}\n"
+                string += f"STRETCHXEFFECT {sprite.index} {sprite.stretch_x}\n"
             #stretchyeffects
             if sprite.stretch_y != 1:
-                string += f"STRETCHYEFFECT {sprite.index}\t{sprite.stretch_y}\n"
+                string += f"STRETCHYEFFECT {sprite.index} {sprite.stretch_y}\n"
 
         if len(self.__script) > 0:
             string += "SCRIPT\n"
@@ -393,7 +393,7 @@ class Animation:
                     break
             for sfx in frame.sfxs:
                 if sfx[0]:
-                    string += f"PLAYSOUND\t{sfx[0]}\t{sfx[1]/16.}\t{sfx[2]/16.}\n"
+                    string += f"PLAYSOUND {sfx[0]} {sfx[1]/16.} {sfx[2]/16.}\n"
             string += f"WAIT {int((frame.length / 0.05)-1)}\n" if frame.length > 0.05 else "\n"
             string += "\n"
         string = string[:-1]
