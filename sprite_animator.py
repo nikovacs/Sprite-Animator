@@ -133,7 +133,8 @@ class Animator_GUI(Ui_MainWindow):
         self.__display_current_frame()
 
     def __set_sfx(self, sfx):
-        if self.curr_animation and self.last_sfx_num:
+        print(self.last_sfx_num)
+        if self.curr_animation and isinstance(self.last_sfx_num, int):
             self.get_current_frame().set_sfx(sfx, self.last_sfx_num)
             self.__display_current_frame()
 
