@@ -157,7 +157,7 @@ class NewSpriteDialog(NewSpriteUI):
         if np_image[y, x, 3] == 0:  # clicked on transparent pixel (no sprite to be found)
             return
 
-        self.__sprite_finder(x, y, np_image, np_pixels_checked)
+        self.__sprite_finder(x, y, np_image, np_pixels_checked, 0)
 
         self.x = self.min_x
         self.y = self.min_y
@@ -166,7 +166,7 @@ class NewSpriteDialog(NewSpriteUI):
 
         self.__update_sprite_dimensions_textboxes()
 
-    def __sprite_finder(self, x: int, y: int, image: np.ndarray, pixels_checked: np.ndarray) -> None:
+    def __sprite_finder(self, x: int, y: int, image: np.ndarray, pixels_checked: np.ndarray, count) -> None:
         """
         Recursive method to find the max and min x y coordinates of a clicked sprite
         @param x: x coordinate
@@ -174,9 +174,11 @@ class NewSpriteDialog(NewSpriteUI):
         @param image: numpy array of the image
         @param pixels_checked: numpy array of the pixels that have been checked (all zeros by default) (1 for checked) (same shape as image)0
         """
+        if count > max(image.shape) * 8: return
         # get coordinates of all surrounding pixels, including diagonals
-        surrounding_pixels = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1), (x + 1, y + 1), (x - 1, y - 1), (x + 1, y - 1), (x - 1, y + 1)]
-        for x, y in surrounding_pixels:
+        surrounding_pixels = [(x + 1, y), (x + 1, y + 1), (x, y + 1), (x - 1, y + 1), (x - 1, y), (x-1, y - 1), (x, y - 1), (x + 1, y - 1)]
+
+        for x, y in surrounding_pixels[count%len(surrounding_pixels):] + surrounding_pixels[:(count+1)%len(surrounding_pixels)]:
             if x < 0 or y < 0 or x > image.shape[1]-1 or y > image.shape[0]-1 or pixels_checked[y, x] == 1 or image[y, x, 3] == 0:
                 continue
             pixels_checked[y, x] = 1
@@ -184,7 +186,7 @@ class NewSpriteDialog(NewSpriteUI):
             if self.min_x is None or x < self.min_x: self.min_x = x
             if self.max_y is None or y > self.max_y: self.max_y = y
             if self.min_y is None or y < self.min_y: self.min_y = y
-            self.__sprite_finder(x, y, image, pixels_checked)
+            self.__sprite_finder(x, y, image, pixels_checked, count + 1)
 
     # def __sprite_finder(self, x: int, y: int, image: np.ndarray) -> None:
     #     """
