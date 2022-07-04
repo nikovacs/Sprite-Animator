@@ -1,5 +1,6 @@
 import os
 import sys
+import threading
 import time
 from PyQt5 import QtCore, QtGui, QtWidgets
 from animation import Animation
@@ -501,12 +502,18 @@ class Animator_GUI(Ui_MainWindow):
 
     def __load_sprites_from_ani(self):
         if self.curr_animation and len(self.curr_animation.sprites) > 0:
+            threads = []
             for sprite in self.curr_animation.sprites:
-                image_path = self.find_file(sprite.image)
-                pixmap, x_offset, y_offset = NewSpriteDialog.load_and_crop_sprite(image_path, sprite)
-                if x_offset or y_offset:
-                    self.sprite_offsets[sprite.index] = (x_offset, y_offset)
-                self.sprite_images[sprite.index] = pixmap
+                threads.append(threading.Thread(target=lambda s=sprite: self.__load_sprites_from_ani_helper(s)))
+            [thread.start() for thread in threads]
+            [thread.join() for thread in threads]
+
+    def __load_sprites_from_ani_helper(self, sprite):
+        image_path = self.find_file(sprite.image)
+        pixmap, x_offset, y_offset = NewSpriteDialog.load_and_crop_sprite(image_path, sprite)
+        if x_offset or y_offset:
+            self.sprite_offsets[sprite.index] = (x_offset, y_offset)
+        self.sprite_images[sprite.index] = pixmap
 
     def find_file(self, file_name: str):
         if file_name in self.file_path_map:
