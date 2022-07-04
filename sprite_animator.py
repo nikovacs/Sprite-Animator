@@ -673,7 +673,9 @@ class Animator_GUI(Ui_MainWindow):
 
     def __save_animation_as(self) -> None:
         if self.curr_animation:
-            pass # TODO
+            self.curr_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save Animation As', '', 'Gani (*.gani)')[0]
+            if self.curr_file:
+                self.__save_animation()
 
     def __save_animation(self) -> None:
         if self.curr_animation:
