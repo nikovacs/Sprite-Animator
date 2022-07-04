@@ -92,7 +92,7 @@ class Animation:
                 if record_script:
                     self.__script.append(line)
                 elif line[0].upper() == "PLAYSOUND":
-                    self.__frames[-1].set_sfx(' '.join(line[1:2]))
+                    self.__frames[-1].add_sfx(line[1:])
                 elif line[0].upper() == "WAIT":
                     self.__frames[-1].set_length((int(line[1])+1) * 0.05)
                     # wait times in ganis are weird....

@@ -13,7 +13,7 @@ class Frame:
             "right": FramePart()
         }
         self.__length = 0.05
-        self.__sfx_file = ""
+        self.__sfxs = {} # {file: (x, y)}
 
     @property
     def length(self) -> float:
@@ -21,7 +21,7 @@ class Frame:
 
     @property
     def sfx(self) -> str:
-        return self.__sfx_file
+        return self.__sfxs
             
     @property
     def frame_parts(self) -> dict:
@@ -34,8 +34,8 @@ class Frame:
         for key, values in self.frame_parts.items():
             self.frame_parts[key] = values[::-1]
     
-    def set_sfx(self, file: str) -> None:
-        self.__sfx_file = file
+    def add_sfx(self, sfx: list) -> None:
+        self.__sfxs[sfx[0]] = (float(sfx[1]), float(sfx[2]))
 
     def set_length(self, length: float) -> None:
         self.__length = length if length >= 0.05 else 0.05
