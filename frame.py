@@ -121,10 +121,12 @@ class FramePart:
         @return: boolean whether the layer was changed or not (not changed when already at the top or bottom)
         return value is important in order to know whether the curr_sprite pointer is to be changed or not
         """
-        if layer_to_move < 0 or layer_to_move >= len(self.list_of_sprites_xs_ys):
-            raise ValueError("Layer to move is out of range")
-        elif direction.lower() not in ('up', 'down'):
-            raise ValueError("Direction must be 'up' or 'down'")
+        # if layer_to_move < 0 or layer_to_move >= len(self.list_of_sprites_xs_ys):
+        #     print("Layer to move is out of range")
+        #     return False
+        # elif direction.lower() not in ('up', 'down'):
+        #     print("Direction must be 'up' or 'down'")
+        #     return False
 
         if direction.lower() == "up":
             if len(self.list_of_sprites_xs_ys)-1 > layer_to_move >= 0:
