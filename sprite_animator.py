@@ -280,8 +280,6 @@ class Animator_GUI(Ui_MainWindow):
             self.plus_sound_btn,
             self.save_btn,
             self.saveas_btn,
-            self.undo_btn,
-            self.redo_btn,
             self.plus_sprite_btn,
             self.reverse_btn,
             self.plus_layer_btn,
@@ -329,6 +327,8 @@ class Animator_GUI(Ui_MainWindow):
         # these buttons are not yet implemented
         self.import_btn.setEnabled(False)
         self.minus_unused_btn.setEnabled(False)
+        self.undo_btn.setEnabled(False)
+        self.redo_btn.setEnabled(False)
 
         return lst_btns  # return the things we want to change the keyPressEvent of
 
