@@ -569,9 +569,9 @@ class Animator_GUI(Ui_MainWindow):
     def find_file(self, file_name: str):
         if file_name in self.file_path_map:
             return self.file_path_map[file_name]
-        for root, dirs, files in os.walk("."):
+        for root, dirs, files in os.walk(r"C:\Users\kovac\Graal"):
             for file in files:
-                if (file.split(".")[0].lower() == file_name or file.lower() == file_name) and file.lower().endswith((".png", ".jpg", ".jpeg", ".gif")):
+                if (file.split(".")[0].lower() == file_name or file.lower() == file_name) and not file.lower().endswith((".gani", ".txt")):
                     self.file_path_map[file_name] = os.path.join(root, file)
                     return os.path.join(root, file)
         file_name = file_name.upper()  # TODO: make these already be in self.file_path_map from start.
