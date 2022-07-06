@@ -13,7 +13,7 @@ from ui import Ui_MainWindow
 from NewSpriteDialog import NewSpriteDialog
 import pygame
 
-__version__ = "v0.2.0-alpha"
+__version__ = "v.0.1.0-alpha"
 
 class Animator_GUI(Ui_MainWindow):
     def __init__(self, MainWindow) -> None:
