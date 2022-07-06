@@ -401,7 +401,7 @@ class Animation:
         string = string[:-1]
         string += "ANIEND\n"
 
-        if len(self.__script) > 0:
+        if self.__script:
             string += "\nSCRIPT\n"
             for line in self.__script:
                 string += line + "\n"
