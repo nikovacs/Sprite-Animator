@@ -13,7 +13,7 @@ from ui import Ui_MainWindow
 from NewSpriteDialog import NewSpriteDialog
 import pygame
 
-__version__ = "v0.1.0-alpha"
+__version__ = "v0.2.0-alpha"
 
 class Animator_GUI(Ui_MainWindow):
     def __init__(self, MainWindow) -> None:
@@ -137,7 +137,6 @@ class Animator_GUI(Ui_MainWindow):
         Checks if there is an update available.
         """
         try:
-            'a' + 1
             response = requests.get("https://api.github.com/repos/nikovacs/sprite-animator/releases/latest")
             if response.status_code == 200:
                 version = response.json()["name"]
@@ -371,6 +370,8 @@ class Animator_GUI(Ui_MainWindow):
         self.__graphics_view.scene.clear()
         self.__graphics_view.scene.addLine(0, -100000, 0, 100000)
         self.__graphics_view.scene.addLine(-100000, 0, 100000, 0)
+        self.__graphics_view.scene.addLine(0, 49, 49, 49)
+        self.__graphics_view.scene.addLine(49, 0, 49, 49)
 
     def __do_change_layer(self, direction: str) -> None:
         if self.__sprites_exist() and self.get_current_frame_part().change_layer(self.curr_sprite, direction):
