@@ -2,6 +2,7 @@ import os
 import sys
 import threading
 import time
+import requests
 from PyQt5 import QtCore, QtGui, QtWidgets
 from animation import Animation
 from sprite import Sprite
@@ -12,6 +13,8 @@ from ui import Ui_MainWindow
 from NewSpriteDialog import NewSpriteDialog
 import pygame
 
+__version__ = "v0.1.0-alpha"
+
 class Animator_GUI(Ui_MainWindow):
     def __init__(self, MainWindow) -> None:
         super().__init__()
@@ -19,6 +22,9 @@ class Animator_GUI(Ui_MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Animation Editor"))
         self.MainWindow = MainWindow
+
+        self.__check_for_update()
+
         self.__init_graphics_view()
 
         self.__init_vars()
@@ -125,6 +131,22 @@ class Animator_GUI(Ui_MainWindow):
 
         # link sound button
         self.plus_sound_btn.clicked.connect(lambda: self.__add_sfx())
+    
+    def __check_for_update(self):
+        """
+        Checks if there is an update available.
+        """
+        response = requests.get("https://api.github.com/repos/nikovacs/sprite-animator/releases/latest")
+        if response.status_code == 200:
+            version = response.json()["name"]
+            if version != __version__:
+                message_box = QtWidgets.QMessageBox()
+                message_box.setWindowTitle("Sprite Animator - Update Available")
+                message_box.setTextFormat(QtCore.Qt.RichText)
+                message_box.setText(f"<b>Sprite Animator</b> has been updated to version <b>{version}</b>!<br>" \
+                            "Download <a href='https://github.com/nikovacs/sprite-animator/releases/latest'>here</a>.")
+                message_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                message_box.exec_()
 
     def __add_sfx(self):
         self.sound_textbox.setText("")
