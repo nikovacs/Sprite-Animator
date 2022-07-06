@@ -136,17 +136,21 @@ class Animator_GUI(Ui_MainWindow):
         """
         Checks if there is an update available.
         """
-        response = requests.get("https://api.github.com/repos/nikovacs/sprite-animator/releases/latest")
-        if response.status_code == 200:
-            version = response.json()["name"]
-            if version != __version__:
-                message_box = QtWidgets.QMessageBox()
-                message_box.setWindowTitle("Sprite Animator - Update Available")
-                message_box.setTextFormat(QtCore.Qt.RichText)
-                message_box.setText(f"<b>Sprite Animator</b> has been updated to version <b>{version}</b>!<br>" \
-                            "Download <a href='https://github.com/nikovacs/sprite-animator/releases/latest'>here</a>.")
-                message_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
-                message_box.exec_()
+        try:
+            'a' + 1
+            response = requests.get("https://api.github.com/repos/nikovacs/sprite-animator/releases/latest")
+            if response.status_code == 200:
+                version = response.json()["name"]
+                if version != __version__:
+                    message_box = QtWidgets.QMessageBox()
+                    message_box.setWindowTitle("Sprite Animator - Update Available")
+                    message_box.setTextFormat(QtCore.Qt.RichText)
+                    message_box.setText(f"<b>Sprite Animator</b> has been updated to version <b>{version}</b>!<br>" \
+                                "Download <a href='https://github.com/nikovacs/sprite-animator/releases/latest'>here</a>.")
+                    message_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                    message_box.exec_()
+        except:
+            QtWidgets.QMessageBox.warning(None, "Sprite Animator - Error", "Could not check for updates.")
 
     def __add_sfx(self):
         self.sound_textbox.setText("")
