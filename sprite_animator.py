@@ -131,6 +131,9 @@ class Animator_GUI(Ui_MainWindow):
 
         # link sound button
         self.plus_sound_btn.clicked.connect(lambda: self.__add_sfx())
+
+        # link edit script button
+        self.edit_script_btn.clicked.connect(self.__edit_script)
     
     def __check_for_update(self):
         """
@@ -150,6 +153,23 @@ class Animator_GUI(Ui_MainWindow):
                     message_box.exec_()
         except:
             QtWidgets.QMessageBox.warning(None, "Sprite Animator - Error", "Could not check for updates.")
+
+    def __edit_script(self):
+        """
+        Opens a script editor window using Plain Text Edit widget
+        """
+        editor = QtWidgets.QPlainTextEdit()
+        editor.setPlainText(self.curr_animation.script if self.curr_animation.script else "")
+        editor.setWindowTitle("Edit Script")
+        editor.resize(600, 400)
+        font = editor.font()
+        font.setPointSize(14)
+        editor.setFont(font)
+        editor.show()
+        editor.textChanged.connect(lambda: self.curr_animation.set_script(editor.toPlainText()))
+        # wait for the editor to close
+        while editor.isVisible():
+            QtWidgets.QApplication.processEvents()
 
     def __add_sfx(self):
         self.sound_textbox.setText("")
@@ -302,6 +322,7 @@ class Animator_GUI(Ui_MainWindow):
         @param enable: True to enable, False to disable
         """
         lst_btns = [
+            self.edit_script_btn,
             self.plus_sound_btn,
             self.save_btn,
             self.saveas_btn,
@@ -548,9 +569,9 @@ class Animator_GUI(Ui_MainWindow):
     def find_file(self, file_name: str):
         if file_name in self.file_path_map:
             return self.file_path_map[file_name]
-        for root, dirs, files in os.walk("."):
+        for root, dirs, files in os.walk(r"C:\Users\kovac\Graal"):
             for file in files:
-                if file.split(".")[0].lower() == file_name or file.lower() == file_name:
+                if (file.split(".")[0].lower() == file_name or file.lower() == file_name) and file.lower().endswith((".png", ".jpg", ".jpeg", ".gif")):
                     self.file_path_map[file_name] = os.path.join(root, file)
                     return os.path.join(root, file)
         file_name = file_name.upper()  # TODO: make these already be in self.file_path_map from start.

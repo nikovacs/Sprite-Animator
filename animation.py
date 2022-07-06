@@ -41,6 +41,13 @@ class Animation:
             self.__frames.append(Frame())
         if from_file:
             self.__set_attrs_from_existing_ani(from_file)
+
+    @property
+    def script(self) -> str:
+        return "\n".join(self.__script)
+
+    def set_script(self, script: str) -> None:
+        self.__script = script.split("\n")
     
     @property
     def frames(self) -> list:
@@ -84,77 +91,78 @@ class Animation:
 
         with open(file, 'r') as f:
             for line in f:
-                line = line.strip().split()
-                if len(line) == 0:
+                line_split = line.strip().split()
+                if len(line_split) == 0:
                     continue
                     # lines in file are tab delimited
                     # ex. ['SPRITE', '-1000', 'ATTR12', '0', '0', '64', '64', 'backpack']
                 if record_script:
+                    if line_split[0].upper() == "SCRIPTEND": 
+                        record_script = False
+                        continue
                     self.__script.append(line)
-                elif line[0].upper() == "PLAYSOUND":
-                    self.__frames[-1].add_sfx(line[1:])
-                elif line[0].upper() == "WAIT":
-                    self.__frames[-1].set_length((int(line[1])+1) * 0.05)
+                elif line_split[0].upper() == "PLAYSOUND":
+                    self.__frames[-1].add_sfx(line_split[1:])
+                elif line_split[0].upper() == "WAIT":
+                    self.__frames[-1].set_length((int(line_split[1])+1) * 0.05)
                     # wait times in ganis are weird....
                     # WAIT = wait as it appears on the gani file (an integer)
                     # length = (WAIT+1) * 0.05
-                elif line[0].upper() == "SCRIPT":
+                elif line_split[0].upper() == "SCRIPT":
                     record_script = True
-                elif line[0].upper() == "SCRIPTEND":
-                    record_script = False
-                elif line[0].upper() == "SETBACKTO":
-                    self.__setbackto = line[1] if len(line) > 1 else ""
-                elif line[0].upper() == "DEFAULTATTR1":
-                    self.__attrs["attr1"] = line[1] if len(line) > 1 else "hat0.png"
-                elif line[0].upper() == "DEFAULTHEAD":
-                    self.__attrs["head"] = line[1] if len(line) > 1 else "head19.png"
-                elif line[0].upper() == "DEFAULTBODY":
-                    self.__attrs["body"] = line[1] if len(line) > 1 else "body.png"
-                elif line[0].upper() == "DEFAULTSHIELD":
-                    self.__attrs["shield"] = line[1] if len(line) > 1 else "shield1.png"
-                elif line[0].upper() == "DEFAULTATTR2":
-                    self.__attrs["attr2"] = line[1] if len(line) > 1 else ""
-                elif line[0].upper() == "DEFAULTATTR3":
-                    self.__attrs["attr3"] = line[1] if len(line) > 1 else ""
-                elif line[0].upper() == "DEFAULTATTR12":
-                    self.__attrs["attr12"] = line[1] if len(line) > 1 else ""
-                elif line[0].upper() == "DEFAULTPARAM1":
-                    self.__attrs["param1"] = line[1] if len(line) > 1 else ""
-                elif line[0].upper() == "DEFAULTPARAM2":
-                    self.__attrs["param2"] = line[1] if len(line) > 1 else ""
-                elif line[0].upper() == "DEFAULTPARAM3":
-                    self.__attrs["param3"] = line[1] if len(line) > 1 else ""
-                elif line[0].upper() == "ANI":
+                elif line_split[0].upper() == "SETBACKTO":
+                    self.__setbackto = line_split[1] if len(line_split) > 1 else ""
+                elif line_split[0].upper() == "DEFAULTATTR1":
+                    self.__attrs["attr1"] = line_split[1] if len(line_split) > 1 else "hat0.png"
+                elif line_split[0].upper() == "DEFAULTHEAD":
+                    self.__attrs["head"] = line_split[1] if len(line_split) > 1 else "head19.png"
+                elif line_split[0].upper() == "DEFAULTBODY":
+                    self.__attrs["body"] = line_split[1] if len(line_split) > 1 else "body.png"
+                elif line_split[0].upper() == "DEFAULTSHIELD":
+                    self.__attrs["shield"] = line_split[1] if len(line_split) > 1 else "shield1.png"
+                elif line_split[0].upper() == "DEFAULTATTR2":
+                    self.__attrs["attr2"] = line_split[1] if len(line_split) > 1 else ""
+                elif line_split[0].upper() == "DEFAULTATTR3":
+                    self.__attrs["attr3"] = line_split[1] if len(line_split) > 1 else ""
+                elif line_split[0].upper() == "DEFAULTATTR12":
+                    self.__attrs["attr12"] = line_split[1] if len(line_split) > 1 else ""
+                elif line_split[0].upper() == "DEFAULTPARAM1":
+                    self.__attrs["param1"] = line_split[1] if len(line_split) > 1 else ""
+                elif line_split[0].upper() == "DEFAULTPARAM2":
+                    self.__attrs["param2"] = line_split[1] if len(line_split) > 1 else ""
+                elif line_split[0].upper() == "DEFAULTPARAM3":
+                    self.__attrs["param3"] = line_split[1] if len(line_split) > 1 else ""
+                elif line_split[0].upper() == "ANI":
                     self.__record_ani = True
                     self.__ani_dir = 0
-                elif line[0].upper() == "ANIEND":
+                elif line_split[0].upper() == "ANIEND":
                     self.__record_ani = False
-                elif line[0].upper() == "SINGLEDIRECTION":
+                elif line_split[0].upper() == "SINGLEDIRECTION":
                     self.is_single_dir = True
-                elif line[0].upper() == "CONTINUOUS":
+                elif line_split[0].upper() == "CONTINUOUS":
                     self.is_continuous = True
-                elif line[0].upper() == "LOOP":
+                elif line_split[0].upper() == "LOOP":
                     self.is_loop = True
-                elif line[0].upper() == "ROTATEEFFECT":
-                    self.__rotate_effects[int(line[1])] = Animation.radians_to_degrees(float(line[2]))
-                elif line[0].upper() == "STRETCHXEFFECT":
-                    self.__stretch_x_effects[int(line[1])] = float(line[2]) if len(line) > 1 else 1
-                elif line[0].upper() == "STRETCHYEFFECT":
-                    self.__stretch_y_effects[int(line[1])] = float(line[2]) if len(line) > 1 else 1
-                elif line[0].upper() == "COLOREFFECT":
-                    self.__color_effects[int(line[1])] = [float(x) for x in line[2:]]
-                elif line[0].upper() == "ZOOMEFFECT":
-                    self.__zoom_effects[int(line[1])] = float(line[2]) if len(line) > 1 else 1
-                elif line[0].upper() == "EFFECTMODE":
-                    self.__mode_effects[int(line[1])] = int(line[2]) if len(line) > 1 else 0
+                elif line_split[0].upper() == "ROTATEEFFECT":
+                    self.__rotate_effects[int(line_split[1])] = Animation.radians_to_degrees(float(line_split[2]))
+                elif line_split[0].upper() == "STRETCHXEFFECT":
+                    self.__stretch_x_effects[int(line_split[1])] = float(line_split[2]) if len(line_split) > 1 else 1
+                elif line_split[0].upper() == "STRETCHYEFFECT":
+                    self.__stretch_y_effects[int(line_split[1])] = float(line_split[2]) if len(line_split) > 1 else 1
+                elif line_split[0].upper() == "COLOREFFECT":
+                    self.__color_effects[int(line_split[1])] = [float(x) for x in line_split[2:]]
+                elif line_split[0].upper() == "ZOOMEFFECT":
+                    self.__zoom_effects[int(line_split[1])] = float(line_split[2]) if len(line_split) > 1 else 1
+                elif line_split[0].upper() == "EFFECTMODE":
+                    self.__mode_effects[int(line_split[1])] = int(line_split[2]) if len(line_split) > 1 else 0
                 elif self.__record_ani and not self.is_single_dir:
-                    self.__generate_frames(line)
+                    self.__generate_frames(line_split)
                 elif self.__record_ani and self.is_single_dir:
-                    self.__generate_frames_for_single_dir(line)
+                    self.__generate_frames_for_single_dir(line_split)
                 elif record_script:
-                    self.__script.append(line)
-                elif self.__is_line_valid_sprite(line):
-                    self.__interpret_sprite_line(line[1:])
+                    self.__script.append(line_split)
+                elif self.__is_line_valid_sprite(line_split):
+                    self.__interpret_sprite_line(line_split[1:])
 
         if self.__rotate_effects: self.__apply_rotate_effects()
         if self.__stretch_x_effects or self.__stretch_y_effects: self.__apply_stretch_effects()
@@ -377,12 +385,6 @@ class Animation:
             if sprite.stretch_y != 1:
                 string += f"STRETCHYEFFECT {sprite.index} {sprite.stretch_y}\n"
 
-        if len(self.__script) > 0:
-            string += "SCRIPT\n"
-            for line in self.__script:
-                string += line + "\n"
-            string += "SCRIPTEND\n"
-
         string += "\n"
 
         string += "ANI\n"
@@ -398,4 +400,12 @@ class Animation:
             string += "\n"
         string = string[:-1]
         string += "ANIEND\n"
+
+        if len(self.__script) > 0:
+            string += "\nSCRIPT\n"
+            for line in self.__script:
+                string += line + "\n"
+            string = string[:-1]
+            string += "SCRIPTEND\n"
+
         return string
