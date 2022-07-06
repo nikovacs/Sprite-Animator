@@ -13,7 +13,7 @@ from ui import Ui_MainWindow
 from NewSpriteDialog import NewSpriteDialog
 import pygame
 
-__version__ = "v.0.1.0-alpha"
+__version__ = "v.0.2.0-alpha"
 
 class Animator_GUI(Ui_MainWindow):
     def __init__(self, MainWindow) -> None:
@@ -569,7 +569,7 @@ class Animator_GUI(Ui_MainWindow):
     def find_file(self, file_name: str):
         if file_name in self.file_path_map:
             return self.file_path_map[file_name]
-        for root, dirs, files in os.walk(r"C:\Users\kovac\Graal"):
+        for root, dirs, files in os.walk("."):
             for file in files:
                 if (file.split(".")[0].lower() == file_name or file.lower() == file_name) and file.lower().endswith((".png", ".jpg", ".jpeg", ".gif")):
                     self.file_path_map[file_name] = os.path.join(root, file)
