@@ -764,7 +764,6 @@ class Animator_GUI(Ui_MainWindow):
         if self.curr_animation:
             new_sprite_window = QtWidgets.QDialog()
             NewSpriteDialog(self, new_sprite_window, from_sprite)
-            new_sprite_window.setStyleSheet(self.MainWindow.styleSheet())
             new_sprite_window.exec_()
             self.__display_current_frame()
 
@@ -775,7 +774,6 @@ class Animator_GUI(Ui_MainWindow):
         color = QtWidgets.QColorDialog.getColor()
         if color.isValid():
             self.__graphics_view.setBackgroundBrush(color)
-            MainWindow.setStyleSheet(f"background-color: {color.name()}")
 
     def __get_gani_file(self) -> str:
         """
