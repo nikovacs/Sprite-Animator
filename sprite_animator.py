@@ -417,7 +417,7 @@ class Animator_GUI(Ui_MainWindow):
             self.__display_current_frame()
 
     def key_press_event(self, event) -> None:
-        if not self.__sprites_exist(): return
+        if not self.curr_animation or not self.__sprites_exist(): return
         if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
             self.__delete_curr_sprite()
             return
