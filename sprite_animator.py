@@ -22,6 +22,8 @@ class Animator_GUI(Ui_MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Animation Editor"))
         self.MainWindow = MainWindow
+        # set icon to pk_clapper.ico
+        MainWindow.setWindowIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "pk_clapper.ico")))
 
         self.__check_for_update()
         self.__init_graphics_view()
@@ -605,23 +607,23 @@ class Animator_GUI(Ui_MainWindow):
             return self.find_file(self.curr_animation.attrs['param3'])
 
     def __new_animation(self, from_file=False) -> None:
-        old_file = ""
-        if self.curr_file: 
-            old_file = self.curr_file
+        self.__new_ani_loaded = False
         if from_file:
             # display a QFileDialog to get the file name
             file = self.__get_gani_file()
-            print("file:",file)
             if file.endswith(".gani"):
                 self.curr_file = file
                 self.__init_vars()
                 self.curr_animation = Animation(from_file=file)
+                self.__new_ani_loaded = True
         else:
+            print("test")
             self.curr_file = ""
             self.__init_vars()
             self.curr_animation = Animation()
+            self.__new_ani_loaded = True
 
-        if self.curr_animation and old_file != self.curr_file:
+        if self.curr_animation and self.__new_ani_loaded:
             self.__load_sprites_from_ani()
             self.enable_disable_buttons(True)
             self.__set_frame_slider_max()
