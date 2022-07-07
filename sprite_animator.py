@@ -24,11 +24,11 @@ class Animator_GUI(Ui_MainWindow):
         self.MainWindow = MainWindow
 
         self.__check_for_update()
-
         self.__init_graphics_view()
 
         self.__init_vars()
         self.file_path_map = {} # not in init method because I want it to persist as long as the program is open
+        self.curr_file = ""
 
         btns = self.enable_disable_buttons(False)
 
@@ -555,9 +555,15 @@ class Animator_GUI(Ui_MainWindow):
         if self.curr_animation and len(self.curr_animation.sprites) > 0:
             threads = []
             for sprite in self.curr_animation.sprites:
-                threads.append(threading.Thread(target=lambda s=sprite: self.__load_sprites_from_ani_helper(s)))
-            [thread.start() for thread in threads]
-            [thread.join() for thread in threads]
+                thread = QtCore.QThread(None)
+                thread.run = lambda s=sprite: self.__load_sprites_from_ani_helper(s)
+                threads.append(thread)
+                thread.start()
+            [thread.wait() for thread in threads]
+
+            #     threads.append(threading.Thread(target=lambda s=sprite: self.__load_sprites_from_ani_helper(s)))
+            # [thread.start() for thread in threads]
+            # [thread.join() for thread in threads]
 
     def __load_sprites_from_ani_helper(self, sprite):
         image_path = self.find_file(sprite.image)
@@ -599,9 +605,13 @@ class Animator_GUI(Ui_MainWindow):
             return self.find_file(self.curr_animation.attrs['param3'])
 
     def __new_animation(self, from_file=False) -> None:
+        old_file = ""
+        if self.curr_file: 
+            old_file = self.curr_file
         if from_file:
             # display a QFileDialog to get the file name
             file = self.__get_gani_file()
+            print("file:",file)
             if file.endswith(".gani"):
                 self.curr_file = file
                 self.__init_vars()
@@ -611,7 +621,7 @@ class Animator_GUI(Ui_MainWindow):
             self.__init_vars()
             self.curr_animation = Animation()
 
-        if self.curr_animation:
+        if self.curr_animation and old_file != self.curr_file:
             self.__load_sprites_from_ani()
             self.enable_disable_buttons(True)
             self.__set_frame_slider_max()
