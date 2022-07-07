@@ -5,7 +5,7 @@
 ### Supports the following files: ```.gani```
 
 ## Installation Instructions:
-[Download here](https://github.com/nikovacs/sprite-animator/releases/tag/alpha)
+[Download here](https://github.com/nikovacs/sprite-animator/releases/latest)
 
 ### Windows:
 - Download the .exe 
