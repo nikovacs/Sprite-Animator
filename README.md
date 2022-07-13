@@ -1,5 +1,5 @@
 # Sprite Animator:
-### v0.0.0.1-alpha
+### v0.0.2.1-alpha
 
 ### Supports Windows (Windows 7 or higher) and MacOS (unsure of the version cutoff).
 ### Supports the following files: ```.gani```
