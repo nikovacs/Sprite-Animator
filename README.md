@@ -11,7 +11,7 @@
 - Download the .exe 
 - Place it into your Graal folder
     - Probably located at ```C:\Users\<youruser>\Graal```
-    - This program is not compatible with GraalOnline's Unity Client as it encrypts the animations.
+    - This program is not compatible with GraalOnline's Unity Client as it encrypts the animations. 
 
 ### MacOS
 - Download the .zip and extract the .app file
