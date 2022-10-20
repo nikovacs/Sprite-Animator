@@ -1,6 +1,5 @@
 import os
 import sys
-import threading
 import json
 import time
 import requests
@@ -14,7 +13,7 @@ from ui import Ui_MainWindow
 from NewSpriteDialog import NewSpriteDialog
 import pygame
 
-__version__ = "v.0.2.1-alpha"
+__version__ = "v.1.0.0-alpha"
 
 class Animator_GUI(Ui_MainWindow):
     def __init__(self, MainWindow) -> None:
@@ -140,7 +139,16 @@ class Animator_GUI(Ui_MainWindow):
 
         self.setbackto_textbox.textChanged.connect(self.__set_setbackto)
 
-    def __check_for_config_file(self):
+        self.__open_file_associated()
+
+    def __open_file_associated(self) -> None:
+        """
+        If an associated file has been provided, open it right away.
+        """
+        if sys.argv[1:]:
+            self.__new_animation(from_file=True, from_associated_file=sys.argv[1])
+
+    def __check_for_config_file(self) -> None:
         """
         Checks whether the configuration file exists,
         if not, it will create it and promp for necessary info to populate it.
@@ -665,11 +673,14 @@ class Animator_GUI(Ui_MainWindow):
                     return os.path.join(root, possible_file_name)
         
 
-    def __new_animation(self, from_file=False) -> None:
+    def __new_animation(self, *, from_file=False, from_associated_file: str = "") -> None:
         self.__new_ani_loaded = False
         if from_file:
             # display a QFileDialog to get the file name
-            file = self.__get_gani_file()
+            if not from_associated_file:
+                file = self.__get_gani_file()
+            else:
+                file = from_associated_file
             if file.endswith(".gani"):
                 self.curr_file = file
                 self.__init_vars()
@@ -873,7 +884,7 @@ class RunAniWorker(QtCore.QThread):
 
 
 if __name__ == '__main__':
-    app = QtWidgets.QApplication([])
+    app = QtWidgets.QApplication(['', '--no-sandbox'])
     app.setStyle('Fusion')
     MainWindow = QtWidgets.QMainWindow()
     ui = Animator_GUI(MainWindow)
