@@ -114,6 +114,7 @@ class SfxImage(QtWidgets.QGraphicsPixmapItem):
         self.setCursor(QtCore.Qt.ClosedHandCursor)
         self.parent.update_sfx_textbox(self.sfx_num)
         self.parent.last_sfx_num = self.sfx_num
+        self.__set_curr_sprite()
 
     def mouseMoveEvent(self, event):
         self.setCursor(QtCore.Qt.ClosedHandCursor)
@@ -130,11 +131,8 @@ class SfxImage(QtWidgets.QGraphicsPixmapItem):
         if (self.__x, self.__y) != (self.__old_x, self.__old_y):
             self.parent.change_sfx_pos(self.sfx_num, self.__x, self.__y)
 
-    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
-        if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
-            self.parent.delete_sfx(self.sfx_num)
-        else:
-            super().keyPressEvent(event)
+    def __set_curr_sprite(self) -> None:
+        self.parent.select_sfx(self.sfx_num)
 
 
 class DragSpriteView(QtWidgets.QGraphicsView):

@@ -211,7 +211,6 @@ class Animator_GUI(Ui_MainWindow):
     def __add_sfx(self):
         self.sound_textbox.setText("")
         self.get_current_frame().add_sfx()
-        self.last_sfx_num = -1
         self.__display_current_frame()
 
     def __set_sfx(self, sfx):
@@ -284,7 +283,8 @@ class Animator_GUI(Ui_MainWindow):
         self.__clipboard = None
         self.time_label.setText("0.00")
         self.__listen = False
-        self.last_sfx_num = None
+        self.__last_sfx_num = None
+        self.__sfx_active = False
 
     @property
     def __ani_length(self) -> int:
@@ -453,13 +453,17 @@ class Animator_GUI(Ui_MainWindow):
     def __delete_curr_sprite(self) -> None:
         if self.curr_animation and self.curr_sprite is not None and self.curr_sprite >= 0:
             self.get_current_frame_part().list_of_sprites.pop(self.curr_sprite)
-            self.curr_sprite = -1 if len(self.get_current_frame_part().list_of_sprites) > 0 else None
+            self.__set_sprite_last() if len(self.get_current_frame_part().list_of_sprites) > 0 else None
             self.__display_current_frame()
 
     def key_press_event(self, event) -> None:
         if not self.curr_animation or not self.__sprites_exist(): return
         if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
-            self.__delete_curr_sprite()
+            if self.__sfx_active: 
+                self.__delete_sfx()
+                self.__sfx_active = False
+            else:
+                self.__delete_curr_sprite()
             return
         if event.key() == QtCore.Qt.Key_PageUp:
             self.set_curr_sprite(self.curr_sprite + 1)
@@ -521,13 +525,19 @@ class Animator_GUI(Ui_MainWindow):
         # curr_sprite must be something like -1, so we should convert it to the correct index for display
         """
         if self.curr_sprite is None and self.__sprites_exist(): 
-            self.curr_sprite = -1 
+            self.__set_sprite_last() 
         else: 
             return
 
         if not 0 <= self.curr_sprite < len(self.get_current_frame_part().list_of_sprites):
             if self.curr_sprite < 0:
                 self.curr_sprite = len(self.get_current_frame_part().list_of_sprites) + self.curr_sprite
+
+    def __set_sprite_last(self) -> None:
+        """
+        Sets the sprite index to the last index (but not -1)
+        """
+        self.curr_sprite = len(self.get_current_frame_part().list_of_sprites) - 1
 
     def __set_sprite_location(self, x=None, y=None) -> None:
         if not self.__sprites_exist(): return
@@ -558,8 +568,8 @@ class Animator_GUI(Ui_MainWindow):
         self.get_current_frame().change_sfx_pos(sfx_index, x, y)
         self.__display_current_frame()
 
-    def delete_sfx(self, sfx_index: int) -> None:
-        self.get_current_frame().delete_sfx(sfx_index)
+    def __delete_sfx(self) -> None:
+        self.get_current_frame().delete_sfx(self.__last_sfx_num)
         self.__display_current_frame()
     
     def add_sprite_to_scroll_area(self, sprite: Sprite) -> None:
@@ -740,6 +750,14 @@ class Animator_GUI(Ui_MainWindow):
         if 0 <= layer < len(self.get_current_frame_part().list_of_sprites):
             self.curr_sprite = layer
             self.__update_sprite_textboxes()
+
+    def select_sfx(self, sfx_index: int) -> None:
+        """
+        When clicking an SFX image, the SFX becomes targeted,
+        meaning the `delete_key` will affect the sfx and not the sprite.
+        """
+        self.__last_sfx_num = sfx_index
+        self.__sfx_active = True
 
     def delete_sprite(self, sprite: Sprite) -> None:
         """
