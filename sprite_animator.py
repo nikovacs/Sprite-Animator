@@ -14,6 +14,7 @@ from NewSpriteDialog import NewSpriteDialog
 import pygame
 
 __version__ = "v.1.0.0-alpha"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class Animator_GUI(Ui_MainWindow):
     def __init__(self, MainWindow) -> None:
@@ -153,7 +154,7 @@ class Animator_GUI(Ui_MainWindow):
         Checks whether the configuration file exists,
         if not, it will create it and promp for necessary info to populate it.
         """
-        if not os.path.isfile("./config.json"):
+        if not os.path.isfile(os.path.join(BASE_DIR, "config.json")):
             message_box = QtWidgets.QMessageBox()
             message_box.setWindowTitle("Configuration file not found")
             message_box.setText("The configuration file was not found.\nPlease enter the path to your game folder on the next window.")
@@ -170,7 +171,7 @@ class Animator_GUI(Ui_MainWindow):
         config = {
             "game_folder_path": game_folder_path
         }
-        with open("./config.json", "w") as f:
+        with open(os.path.join(BASE_DIR, "config.json"), "w") as f:
             json.dump(config, f, indent=4)
 
     def __get_game_folder(self):
@@ -277,7 +278,7 @@ class Animator_GUI(Ui_MainWindow):
         pygame.init()
         pygame.mixer.init()
 
-        with open("./config.json", "r") as f:
+        with open(os.path.join(BASE_DIR, "config.json"), "r") as f:
             self.__game_folder_path = json.load(f)["game_folder_path"]
 
         self.play = False
