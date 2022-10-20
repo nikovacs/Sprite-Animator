@@ -1,6 +1,7 @@
 import os
 import sys
 import threading
+import json
 import time
 import requests
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -27,7 +28,7 @@ class Animator_GUI(Ui_MainWindow):
 
         self.__check_for_update()
         self.__init_graphics_view()
-
+        self.__check_for_config_file()
         self.__init_vars()
         self.file_path_map = {} # not in init method because I want it to persist as long as the program is open
         self.curr_file = ""
@@ -136,6 +137,40 @@ class Animator_GUI(Ui_MainWindow):
 
         # link edit script button
         self.edit_script_btn.clicked.connect(self.__edit_script)
+
+    def __check_for_config_file(self):
+        """
+        Checks whether the configuration file exists,
+        if not, it will create it and promp for necessary info to populate it.
+        """
+        if not os.path.isfile("./config.json"):
+            message_box = QtWidgets.QMessageBox()
+            message_box.setWindowTitle("Configuration file not found")
+            message_box.setText("The configuration file was not found.\nPlease enter the path to your game folder on the next window.")
+            message_box.exec_()
+            game_folder_path = self.__get_game_folder()
+            while not game_folder_path:
+                game_folder_path = self.__get_game_folder()
+            self.__create_config_file(game_folder_path=game_folder_path)
+
+    def __create_config_file(self, *, game_folder_path: str = "") -> None:
+        """
+        Creates the configuration file.
+        """
+        config = {
+            "game_folder_path": game_folder_path
+        }
+        with open("./config.json", "w") as f:
+            json.dump(config, f, indent=4)
+
+    def __get_game_folder(self):
+        """
+        Promps the user for the game folder.
+        """
+        game_folder = QtWidgets.QFileDialog.getExistingDirectory(None, "Select your game folder")
+        if game_folder:
+            return game_folder
+            
     
     def __check_for_update(self):
         """
@@ -232,6 +267,9 @@ class Animator_GUI(Ui_MainWindow):
         # pygame being used for playing .wav files
         pygame.init()
         pygame.mixer.init()
+
+        with open("./config.json", "r") as f:
+            self.__game_folder_path = json.load(f)["game_folder_path"]
 
         self.play = False
         self.__play_thread = None
@@ -577,7 +615,7 @@ class Animator_GUI(Ui_MainWindow):
     def find_file(self, file_name: str):
         if file_name in self.file_path_map:
             return self.file_path_map[file_name]
-        for root, dirs, files in os.walk(".", followlinks=True):
+        for root, dirs, files in os.walk(self.__game_folder_path, followlinks=True):
             for file in files:
                 if (file.split(".")[0].lower() == file_name or file.lower() == file_name) and not file.lower().endswith((".gani", ".txt")):
                     self.file_path_map[file_name] = os.path.join(root, file)
@@ -782,7 +820,7 @@ class Animator_GUI(Ui_MainWindow):
         Displays a QFileDialog to get a gani file
         """
         file = QtWidgets.QFileDialog.getOpenFileName(None, "Open Gani File",
-                                                     os.path.normpath('./levels/ganis'), "Gani Files (*.gani)")
+                                                     os.path.join(self.__game_folder_path, "levels", "ganis"), "Gani Files (*.gani)")
         return file[0]
 
 
@@ -807,6 +845,7 @@ class RunAniWorker(QtCore.QThread):
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])
+    app.setStyle('Fusion')
     MainWindow = QtWidgets.QMainWindow()
     ui = Animator_GUI(MainWindow)
     MainWindow.show()
