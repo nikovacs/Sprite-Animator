@@ -138,6 +138,8 @@ class Animator_GUI(Ui_MainWindow):
         # link edit script button
         self.edit_script_btn.clicked.connect(self.__edit_script)
 
+        self.setbackto_textbox.textChanged.connect(self.__set_setbackto)
+
     def __check_for_config_file(self):
         """
         Checks whether the configuration file exists,
@@ -585,6 +587,10 @@ class Animator_GUI(Ui_MainWindow):
                 if pygame_sfx := self.__sfx_dict.get(sfx, None):
                     pygame_sfx.play()
 
+    def __set_setbackto(self) -> None:
+        if self.__listen:
+            self.curr_animation.set_setbackto(self.setbackto_textbox.text().strip().lower())
+
     def __update_attr_image(self, attr: str) -> None:
         attr = attr.upper()
         sprites = [sprite for sprite in self.curr_animation.sprites if sprite.image == attr]
@@ -611,10 +617,6 @@ class Animator_GUI(Ui_MainWindow):
                 thread.start()
             [thread.wait() for thread in threads]
 
-            #     threads.append(threading.Thread(target=lambda s=sprite: self.__load_sprites_from_ani_helper(s)))
-            # [thread.start() for thread in threads]
-            # [thread.join() for thread in threads]
-
     def __load_sprites_from_ani_helper(self, sprite):
         image_path = self.find_file(sprite.image)
         pixmap, x_offset, y_offset = NewSpriteDialog.load_and_crop_sprite(image_path, sprite)
@@ -625,34 +627,43 @@ class Animator_GUI(Ui_MainWindow):
     def find_file(self, file_name: str):
         if file_name in self.file_path_map:
             return self.file_path_map[file_name]
-        for root, dirs, files in os.walk(self.__game_folder_path, followlinks=True):
-            for file in files:
-                if (file.split(".")[0].lower() == file_name or file.lower() == file_name) and not file.lower().endswith((".gani", ".txt")):
-                    self.file_path_map[file_name] = os.path.join(root, file)
-                    return os.path.join(root, file)
-        file_name = file_name.upper()  # TODO: make these already be in self.file_path_map from start.
-        if file_name == "SPRITES":
+
+        file_name_upper = file_name.upper()  # TODO: make these already be in self.file_path_map from start.
+        if file_name_upper == "SPRITES":
             return self.find_file("sprites.png")
-        elif file_name == "SHIELD":
+        elif file_name_upper == "SHIELD":
             return self.find_file(self.curr_animation.attrs['shield'])
-        elif file_name == "BODY":
+        elif file_name_upper == "BODY":
             return self.find_file(self.curr_animation.attrs['body'])
-        elif file_name == "HEAD":
+        elif file_name_upper == "HEAD":
             return self.find_file(self.curr_animation.attrs['head'])
-        elif file_name == "ATTR1":
+        elif file_name_upper == "ATTR1":
             return self.find_file(self.curr_animation.attrs['attr1'])
-        elif file_name == "ATTR2":
+        elif file_name_upper == "ATTR2":
             return self.find_file(self.curr_animation.attrs['attr2'])
-        elif file_name == "ATTR3":
+        elif file_name_upper == "ATTR3":
             return self.find_file(self.curr_animation.attrs['attr3'])
-        elif file_name == "ATTR12":
+        elif file_name_upper == "ATTR12":
             return self.find_file(self.curr_animation.attrs['attr12'])
-        elif file_name == "PARAM1":
+        elif file_name_upper == "PARAM1":
             return self.find_file(self.curr_animation.attrs['param1'])
-        elif file_name == "PARAM2":
+        elif file_name_upper == "PARAM2":
             return self.find_file(self.curr_animation.attrs['param2'])
-        elif file_name == "PARAM3":
+        elif file_name_upper == "PARAM3":
             return self.find_file(self.curr_animation.attrs['param3'])
+        
+        # if the user did not enter an extension on their file, we still need to try to find the file
+        if '.' not in file_name:
+            possible_file_names = [f"{file_name.lower()}" + ext for ext in ('.png', '.gif', '.mng')]
+        else:
+            possible_file_names = (file_name.lower(),)
+
+        for root, _, _ in os.walk(self.__game_folder_path, followlinks=True):
+            for possible_file_name in possible_file_names:
+                if os.path.isfile(os.path.join(root, possible_file_name)):
+                    self.file_path_map[file_name] = os.path.join(root, possible_file_name)
+                    return os.path.join(root, possible_file_name)
+        
 
     def __new_animation(self, from_file=False) -> None:
         self.__new_ani_loaded = False

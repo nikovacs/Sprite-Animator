@@ -65,6 +65,9 @@ class Animation:
     def setbackto(self) -> str:
         return self.__setbackto
 
+    def set_setbackto(self, value: str) -> None:
+        self.__setbackto = value
+
     def add_sprite(self, sprite: Sprite) -> None:
         self.__sprites_list = [tmp_sprite for tmp_sprite in self.sprites if tmp_sprite.index != sprite.index]
         self.__sprites_list.append(sprite)
