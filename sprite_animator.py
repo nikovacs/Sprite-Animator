@@ -24,7 +24,7 @@ class Animator_GUI(Ui_MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "Animation Editor"))
         self.MainWindow = MainWindow
         # set icon to pk_clapper.ico
-        MainWindow.setWindowIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), "pk_clapper.ico")))
+        MainWindow.setWindowIcon(QtGui.QIcon(os.path.join(BASE_DIR, "pk_clapper.ico")))
 
         self.__check_for_update()
         self.__init_graphics_view()
