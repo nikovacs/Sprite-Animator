@@ -9,3 +9,5 @@ build/
 *.ipynb
 levels
 config.json
+LICENSE.txt
+SpriteAnimator.iss
