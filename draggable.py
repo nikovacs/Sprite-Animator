@@ -156,6 +156,8 @@ class DragSpriteView(QtWidgets.QGraphicsView):
 
         self.setToolTip(f"Sprite({index}) " + sprite.desc)
         parent.sprite_scroll_area.widget().layout().addWidget(self)
+        # forward wheel events to the scroll area
+        self.wheelEvent = parent.sprite_scroll_area.wheelEvent
 
     def enterEvent(self, event):
         self.setCursor(QtCore.Qt.OpenHandCursor)
