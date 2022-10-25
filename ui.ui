@@ -694,6 +694,56 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <tabstops>
+  <tabstop>new_btn</tabstop>
+  <tabstop>open_btn</tabstop>
+  <tabstop>save_btn</tabstop>
+  <tabstop>saveas_btn</tabstop>
+  <tabstop>undo_btn</tabstop>
+  <tabstop>redo_btn</tabstop>
+  <tabstop>plus_sprite_btn</tabstop>
+  <tabstop>minus_unused_btn</tabstop>
+  <tabstop>import_btn</tabstop>
+  <tabstop>reverse_btn</tabstop>
+  <tabstop>bg_color_btn</tabstop>
+  <tabstop>dir_combo_box</tabstop>
+  <tabstop>selected_sprite_text</tabstop>
+  <tabstop>selected_sprite_combo</tabstop>
+  <tabstop>plus_layer_btn</tabstop>
+  <tabstop>minus_layer_btn</tabstop>
+  <tabstop>plus_x_btn</tabstop>
+  <tabstop>minus_x_btn</tabstop>
+  <tabstop>plus_y_btn</tabstop>
+  <tabstop>minus_y_btn</tabstop>
+  <tabstop>x_textbox</tabstop>
+  <tabstop>y_textbox</tabstop>
+  <tabstop>length_textbox</tabstop>
+  <tabstop>loop_checkbox</tabstop>
+  <tabstop>continuous_checkbox</tabstop>
+  <tabstop>singledir_checkbox</tabstop>
+  <tabstop>setbackto_textbox</tabstop>
+  <tabstop>def_head_textbox</tabstop>
+  <tabstop>def_body_textbox</tabstop>
+  <tabstop>def_attr1_textbox</tabstop>
+  <tabstop>def_attr2_textbox</tabstop>
+  <tabstop>def_attr3_textbox</tabstop>
+  <tabstop>def_attr12_textbox</tabstop>
+  <tabstop>param1_textbox</tabstop>
+  <tabstop>param2_textbox</tabstop>
+  <tabstop>param3_textbox</tabstop>
+  <tabstop>edit_script_btn</tabstop>
+  <tabstop>frame_slider</tabstop>
+  <tabstop>play_btn</tabstop>
+  <tabstop>stop_btn</tabstop>
+  <tabstop>plus_frame_btn</tabstop>
+  <tabstop>minus_frame_btn</tabstop>
+  <tabstop>copy_btn</tabstop>
+  <tabstop>paste_left_btn</tabstop>
+  <tabstop>paste_right_btn</tabstop>
+  <tabstop>plus_sound_btn</tabstop>
+  <tabstop>sound_textbox</tabstop>
+  <tabstop>sprite_scroll_area</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
