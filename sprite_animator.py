@@ -92,7 +92,7 @@ class Animator_GUI(Ui_MainWindow):
         self.selected_sprite_combo.currentIndexChanged.connect(self.__do_sprite_combo_changed_event)
 
         # link length textbox
-        self.length_textbox.setValidator(QtGui.QDoubleValidator(0.05, 100000, 2))
+        self.length_textbox.setValidator(QtGui.QDoubleValidator(0.00, 100000, 2))
         self.length_textbox.returnPressed.connect(lambda: self.__set_frame_length(float(self.length_textbox.text())))
 
         # link loop, continuous, and singledir checkboxes
@@ -225,7 +225,6 @@ class Animator_GUI(Ui_MainWindow):
         self.__display_current_frame()
 
     def __set_sfx(self, sfx):
-        print(self.last_sfx_num)
         if self.curr_animation and isinstance(self.last_sfx_num, int):
             self.get_current_frame().set_sfx(sfx, self.last_sfx_num)
             self.__display_current_frame()
@@ -356,6 +355,7 @@ class Animator_GUI(Ui_MainWindow):
         if self.curr_animation:
             length = round(length, 2)
             length = round(length / 0.05) * 0.05
+            length = float(f"{length:.2f}")
             if length < 0.05: length = 0.05
             self.length_textbox.setText(str(length))
             self.get_current_frame().set_length(length)
@@ -688,7 +688,6 @@ class Animator_GUI(Ui_MainWindow):
                 self.curr_animation = Animation(from_file=file)
                 self.__new_ani_loaded = True
         else:
-            print("test")
             self.curr_file = ""
             self.__init_vars()
             self.curr_animation = Animation()
