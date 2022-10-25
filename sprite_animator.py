@@ -1,3 +1,4 @@
+from genericpath import isfile
 import os
 import sys
 import json
@@ -13,7 +14,6 @@ from ui import Ui_MainWindow
 from NewSpriteDialog import NewSpriteDialog
 import pygame
 
-__version__ = "v.1.0.0-alpha"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class Animator_GUI(Ui_MainWindow):
@@ -187,11 +187,12 @@ class Animator_GUI(Ui_MainWindow):
         """
         Checks if there is an update available.
         """
+        current_version = self.__get_version()
         try:
             response = requests.get("https://api.github.com/repos/nikovacs/sprite-animator/releases/latest")
             if response.status_code == 200:
                 version = response.json()["name"]
-                if version != __version__:
+                if version != current_version:
                     message_box = QtWidgets.QMessageBox()
                     message_box.setWindowTitle("Sprite Animator - Update Available")
                     message_box.setTextFormat(QtCore.Qt.RichText)
@@ -201,6 +202,17 @@ class Animator_GUI(Ui_MainWindow):
                     message_box.exec_()
         except:
             QtWidgets.QMessageBox.warning(None, "Sprite Animator - Error", "Could not check for updates.")
+
+    def __get_version(self) -> str:
+        """
+        Gets the current version of the application.
+        If the version cannot be found, it will return "unknown" which will prompt an update message.
+        """
+        if not os.path.isfile(os.path.join(BASE_DIR, "version.txt")):
+            return "unknown"
+        with open(os.path.join(BASE_DIR, "version.txt"), "r") as f:
+            return f.read().strip()
+
 
     def __edit_script(self):
         """
