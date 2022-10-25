@@ -736,7 +736,6 @@ class Animator_GUI(Ui_MainWindow):
                 im_view.mouseReleaseEvent = lambda e, i=index: self.__drag_sprite_view_mouse_event(e, i)
 
     def __drag_sprite_view_mouse_event(self, event, i) -> None:
-        # make sure the event is a left mouse release event
         if event.button() == QtCore.Qt.LeftButton:
             self.__add_sprite_to_frame_part(i)
 
@@ -759,8 +758,8 @@ class Animator_GUI(Ui_MainWindow):
             sprite_tuple = (sprite_to_add, round(scenePoint.x() - (sprite_to_add.width / 2)),
                             round(scenePoint.y() - (sprite_to_add.height / 2)))
             self.get_current_frame_part().add_sprite_xs_ys(sprite_tuple)
-            self.set_curr_sprite(-1)
-            self.__correct_current_sprite()
+            # self.__correct_current_sprite()
+            self.__set_sprite_last()
             self.__display_current_frame()
 
     def set_curr_sprite(self, layer: int) -> None:
