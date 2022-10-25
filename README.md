@@ -24,8 +24,13 @@ It may prompt you to install Rosetta when you attempt to run the program, or you
 To install it yourself, open terminal by pressing `CMD`+`Spacebar` and typing `Terminal` and pressing Return.
 Next, type this line: `softwareupdate -install-rosetta -agree-to-license`
 
-#### If there are any issues:
+## If there are any issues:
 - Please contact me or post an issue [here](https://github.com/nikovacs/sprite-animator/issues)
+
+### Known issues:
+
+MacOS:
+- If the program crashes immediately when opening a file, try opening a terminal and typing `ulimit -n 21000` (NOTE: Only persists until computer is rebooted)
 
 ### NOTE:
 This version is still in Alpha and may be unstable. Save often!
