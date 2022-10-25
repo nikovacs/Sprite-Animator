@@ -36,6 +36,7 @@ class Frame:
     
     def add_sfx(self, sfx: list = None) -> None:
         if sfx:
+            if len(sfx) != 3: sfx = (sfx[0], 1.5, 2)
             self.__sfxs.append((sfx[0], float(sfx[1])*16, float(sfx[2])*16))
         else:
             self.__sfxs.append(("", 0, 0))
