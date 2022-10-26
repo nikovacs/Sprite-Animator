@@ -1,6 +1,8 @@
 import pygame.mixer
+import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class DragImage(QtWidgets.QGraphicsPixmapItem):
     """
@@ -85,7 +87,7 @@ class SfxImage(QtWidgets.QGraphicsPixmapItem):
     Subclass of QGraphicsPixmapItem for displaying sfx on the frame view
     """
     def __init__(self, parent, sfx_name: str, sfx_to_play: pygame.mixer.Sound, x=0, y=0, sfx_num=0):
-        super().__init__(QtGui.QPixmap(parent.find_file("soundicon.png")))
+        super().__init__(QtGui.QPixmap(os.path.join(BASE_DIR, "speaker-icon.png")))
         self.parent = parent
         self.sfx_name = sfx_name
         self.sfx_to_play = sfx_to_play
