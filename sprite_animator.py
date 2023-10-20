@@ -500,6 +500,18 @@ class Animator_GUI(Ui_MainWindow):
             else:
                 self.__play_animation()
             return
+        if event.key() == QtCore.Qt.Key_Comma:
+            if self.curr_frame > 0:
+                self.curr_frame -= 1
+                self.__set_frame_slider()
+                self.__display_current_frame()
+            return
+        if event.key() == QtCore.Qt.Key_Period:
+            if self.curr_frame + 1 < self.__ani_length:
+                self.curr_frame += 1
+                self.__set_frame_slider()
+                self.__display_current_frame()
+            return
 
         direction = None
         amount = None
